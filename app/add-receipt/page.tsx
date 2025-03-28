@@ -5,13 +5,14 @@ import { Box, Heading, Button, VStack, useToast } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 import MobileLayout from "../components/MobileLayout";
 import S3PhotoUploader from "../components/S3PhotoUploader";
+import { useUploadReceipt } from "../hooks/use-upload-receipt";
 
 export default function AddReceiptPage() {
   const router = useRouter();
   const toast = useToast();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { mutate: uploadReceipt, isPending } = useUploadReceipt();
 
   const handleImageSelected = (fileUrl: string, fileKey: string) => {
     setImageUrl(fileUrl);
@@ -28,46 +29,7 @@ export default function AddReceiptPage() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      // Submit receipt information to backend API
-      const response = await fetch("/api/receipts", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          imageUrl,
-          imageKey,
-          // Other receipt information...
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to submit receipt information");
-      }
-
-      toast({
-        title: "Submission Successful",
-        description: "Your receipt has been successfully submitted",
-        status: "success",
-        duration: 3000,
-      });
-
-      // Return to homepage after success
-      router.push("/");
-    } catch (error) {
-      console.error("Error submitting receipt information:", error);
-      toast({
-        title: "Submission Failed",
-        description: "Please try again later",
-        status: "error",
-        duration: 3000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    uploadReceipt(imageUrl);
   };
 
   return (
@@ -87,7 +49,7 @@ export default function AddReceiptPage() {
           <Button
             colorScheme="primary"
             size="lg"
-            isLoading={isSubmitting}
+            isLoading={isPending}
             loadingText="Submitting..."
             onClick={handleSubmit}
             isDisabled={!imageUrl}

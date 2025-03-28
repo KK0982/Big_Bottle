@@ -2,8 +2,7 @@
 
 import React, { useRef, useState, useCallback } from "react";
 import { Box, Button, Flex, VStack, Text, Icon } from "@chakra-ui/react";
-import { FaCamera, FaRedo } from "react-icons/fa";
-
+import FA from "react-fontawesome";
 interface CameraProps {
   onCapture: (imageData: string) => void;
   onClose?: () => void;
@@ -22,7 +21,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "environment", // 优先使用后置摄像头
+          facingMode: "environment",
           width: { ideal: 1280 },
           height: { ideal: 720 },
         },
@@ -37,31 +36,33 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
         setError(null);
       }
     } catch (err) {
-      setError("无法访问摄像头，请确保您已授予摄像头访问权限。");
-      console.error("摄像头访问错误:", err);
+      setError(
+        "Camera access error, please ensure you have granted camera access."
+      );
+      console.error("Camera access error:", err);
     }
   };
 
-  // 拍照
+  // Capture image
   const captureImage = useCallback(() => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
 
-      // 设置画布尺寸与视频相同
+      // Set canvas size to match video
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
 
-      // 在画布上绘制当前视频帧
+      // Draw current video frame on canvas
       const context = canvas.getContext("2d");
       if (context) {
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-        // 转换为图片数据
+        // Convert to image data
         const imageData = canvas.toDataURL("image/jpeg");
         setCapturedImage(imageData);
 
-        // 关闭摄像头流
+        // Close camera stream
         if (streamRef.current) {
           streamRef.current.getTracks().forEach((track) => track.stop());
         }
@@ -69,13 +70,13 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     }
   }, []);
 
-  // 重新拍照
+  // Retake photo
   const retakePhoto = useCallback(() => {
     setCapturedImage(null);
     openCamera();
   }, []);
 
-  // 确认使用拍摄的照片
+  // Confirm using captured photo
   const confirmImage = useCallback(() => {
     if (capturedImage) {
       onCapture(capturedImage);
@@ -83,7 +84,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     }
   }, [capturedImage, onCapture, onClose]);
 
-  // 组件卸载时清理资源
+  // Clean up resources when component unmounts
   React.useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -111,7 +112,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           <Text>点击下方按钮打开摄像头</Text>
           <Button
             colorScheme="primary"
-            leftIcon={<Icon as={FaCamera} />}
+            leftIcon={<FA name="camera" />}
             onClick={openCamera}
           >
             打开摄像头
@@ -143,7 +144,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
               h="64px"
               onClick={captureImage}
             >
-              <Icon as={FaCamera} boxSize="24px" />
+              <Icon as={() => <FA name="camera" />} boxSize="24px" />
             </Button>
           </Flex>
         </Box>
@@ -151,6 +152,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
 
       {capturedImage && (
         <Box position="relative">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={capturedImage}
             alt="Captured"
@@ -167,7 +169,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
           >
             <Button
               colorScheme="gray"
-              leftIcon={<Icon as={FaRedo} />}
+              leftIcon={<Icon as={() => <FA name="redo" />} />}
               onClick={retakePhoto}
             >
               重拍
