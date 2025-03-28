@@ -3,8 +3,8 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { IconButton } from "@chakra-ui/react";
-import { FaPlus } from "react-icons/fa";
 import { useWallet } from "@vechain/vechain-kit";
+import AddIcon from "./icons/add";
 
 export function AddReceiptButton() {
   const router = useRouter();
@@ -24,7 +24,7 @@ export function AddReceiptButton() {
       borderRadius="20px"
       transform="translateX(-50%)"
       aria-label="add receipt"
-      icon={<FaPlus />}
+      icon={<AddIcon />}
       disabled={!connection.isConnected}
       variant={connection.isConnected ? "primary" : "disabled"}
       size="lg"
