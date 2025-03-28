@@ -15,6 +15,7 @@ export function EthereumAvatar({
 
       const seed = parseInt(address.slice(2, 10), 16);
 
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const icon = require("@metamask/jazzicon")(size, seed);
       ref.current.appendChild(icon);
     }
