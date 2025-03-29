@@ -5,7 +5,6 @@ export enum BottleStatus {
 }
 
 export interface SuccessBottleReceipt {
-  id: string;
   drinkName: string;
   drinkCapacity: number;
   drinkAmount: number;
@@ -14,12 +13,10 @@ export interface SuccessBottleReceipt {
 }
 
 export interface FailedBottleReceipt {
-  id: string;
   status: BottleStatus.FAILED;
 }
 
 export interface ProcessingBottleReceipt {
-  id: string;
   status: BottleStatus.PROCESSING;
 }
 

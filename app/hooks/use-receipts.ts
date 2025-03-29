@@ -1,36 +1,30 @@
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@vechain/vechain-kit";
-import { BottleStatus, BottleReceipt } from "./types";
+import { BottleReceipt, BottleStatus } from "./types";
+import { API_HOST } from "./consts";
 
-function sleep(time: number) {
-  return new Promise((resolve) => setTimeout(resolve, time));
-}
+async function fetchReceipts(address: string): Promise<BottleReceipt> {
+  const response = await fetch(
+    `${API_HOST}/bigbottle/cardinfo?address=${address}`
+  );
+  const data = await response.json();
 
-function mockReceipts(): BottleReceipt[] {
-  return [
-    {
-      id: "1",
-      drinkName: "Lm アールグ レイムトウ",
-      drinkCapacity: 2001,
-      drinkAmount: 2,
-      points: 14,
-      status: BottleStatus.COMPLETED,
-    },
-    {
-      id: "2",
-      status: BottleStatus.FAILED,
-    },
-    {
-      id: "3",
-      status: BottleStatus.PROCESSING,
-    },
-  ];
-}
+  if (response.ok) {
+    if (data.code === 200) {
+      return {
+        status: BottleStatus.COMPLETED,
+        ...data.data,
+      };
+    } else {
+      return {
+        status: BottleStatus.FAILED,
+      };
+    }
+  }
 
-async function fetchReceipts(address: string) {
-  await sleep(3000);
-
-  return mockReceipts();
+  return {
+    status: BottleStatus.FAILED,
+  };
 }
 
 export function useReceipts() {
