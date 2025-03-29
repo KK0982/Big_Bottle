@@ -16,7 +16,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
   const [error, setError] = useState<string | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // 打开相机
+  // Open camera
   const openCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({

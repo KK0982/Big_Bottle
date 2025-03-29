@@ -14,6 +14,7 @@ const theme = extendTheme({
       800: "#005923",
       900: "#00260e",
     },
+    error: "#FF4E59",
   },
   components: {
     Button: {

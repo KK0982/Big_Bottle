@@ -2,24 +2,20 @@
 
 import React from "react";
 import MobileLayout from "./components/MobileLayout";
-import Image from "next/image";
 import { Receipt } from "./components/Receipt";
 import { AddReceiptButton } from "./components/AddReceiptButton";
+import { Box } from "@chakra-ui/react";
 
 export default function Home() {
   return (
     <MobileLayout title="BigBottle">
-      <Image
-        src="/images/cover.jpg"
-        alt="BigBottle"
-        width={500}
-        height={500}
-        style={{
-          width: "100%",
-          height: "auto",
-          maxHeight: "70vh",
-          objectFit: "contain",
-        }}
+      <Box
+        width="100%"
+        height="240px"
+        backgroundImage="/images/cover.jpg"
+        backgroundSize="cover"
+        backgroundPosition="center"
+        backgroundRepeat="no-repeat"
       />
       <Receipt />
       <AddReceiptButton />
