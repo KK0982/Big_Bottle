@@ -7,7 +7,6 @@ import {
   useWallet,
 } from "@vechain/vechain-kit";
 import { Button, Text, Icon } from "@chakra-ui/react";
-import { FaWallet } from "react-icons/fa";
 import { EthereumAvatar } from "./EthereumAvatar";
 
 const ConnectButton: React.FC = () => {
@@ -44,9 +43,7 @@ const ConnectButton: React.FC = () => {
       >
         {connectedWallet?.address ? (
           <EthereumAvatar address={connectedWallet?.address || ""} size={16} />
-        ) : (
-          <Icon as={FaWallet} boxSize="20px" />
-        )}
+        ) : null}
         <Text flex="none" order={1} flexGrow={0}>
           {`${connectedWallet?.address?.slice(
             0,
