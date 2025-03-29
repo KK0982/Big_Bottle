@@ -3,8 +3,8 @@
 import React, { ReactNode } from "react";
 import Header from "./Header";
 import { Box, IconButton } from "@chakra-ui/react";
-import { FaArrowLeft } from "react-icons/fa";
 import { useRouter, usePathname } from "next/navigation";
+import FA from "react-fontawesome";
 
 interface MobileLayoutProps {
   title?: string;
@@ -48,7 +48,7 @@ const MobileLayout = ({
           shouldShowBackButton ? (
             <IconButton
               aria-label="back"
-              icon={<FaArrowLeft color="black" />}
+              icon={<FA name="arrow-left" />}
               variant="ghost"
               size="sm"
               onClick={handleBack}

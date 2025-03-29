@@ -13,8 +13,8 @@ import {
   useToast,
   Progress,
 } from "@chakra-ui/react";
-import { FaCamera, FaUpload, FaTrash } from "react-icons/fa";
 import CameraModal from "./CameraModal";
+import FA from "react-fontawesome";
 
 interface PhotoUploaderProps {
   onImageSelected: (fileUrl: string, fileKey: string) => void;
@@ -148,7 +148,7 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
             <Flex gap={2}>
               <Button
                 flex={1}
-                leftIcon={<Icon as={FaCamera} />}
+                leftIcon={<Icon as={() => <FA name="camera" />} />}
                 colorScheme="primary"
                 onClick={onOpen}
                 isDisabled={isUploading}
@@ -158,7 +158,7 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
 
               <Button
                 flex={1}
-                leftIcon={<Icon as={FaUpload} />}
+                leftIcon={<Icon as={() => <FA name="upload" />} />}
                 variant="outline"
                 colorScheme="primary"
                 onClick={handleUploadClick}
