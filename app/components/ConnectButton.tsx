@@ -67,7 +67,6 @@ const ConnectButton: React.FC = () => {
       p="6px 8px"
       borderRadius="8px"
     >
-      <Icon as={FaWallet} boxSize="20px" display="none" />
       <Text flex="none" order={1} flexGrow={0}>
         Connect Wallet
       </Text>
