@@ -195,7 +195,7 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
               onClick={handleClear}
               isDisabled={isUploading}
             >
-              <Icon as={FaTrash} />
+              <Icon as={() => <FA name="trash" />} />
             </Button>
           </Box>
         )}
