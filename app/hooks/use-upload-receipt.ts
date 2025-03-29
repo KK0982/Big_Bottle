@@ -2,10 +2,14 @@ import { useMutation } from "@tanstack/react-query";
 import { API_HOST } from "./consts";
 import { useWallet } from "@vechain/vechain-kit";
 import { useToast } from "@chakra-ui/react";
+import { useRouter } from "next/router";
 
 function uploadReceipt(image: string, address: string) {
   return fetch(`${API_HOST}/bigbottle/process`, {
     method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ img_url: image, wallet_address: address }),
   });
 }
@@ -14,6 +18,7 @@ export function useUploadReceipt() {
   const { connection, connectedWallet } = useWallet();
   const address = connectedWallet?.address;
   const toast = useToast();
+  const router = useRouter();
 
   return useMutation({
     mutationFn: (image: string) => {
@@ -29,6 +34,7 @@ export function useUploadReceipt() {
         description: "Your receipt has been uploaded",
         status: "success",
       });
+      router.push("/");
     },
     onError: () => {
       toast({
