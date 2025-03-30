@@ -4,33 +4,43 @@ import { BottleReceipt, BottleStatus } from "./types";
 import { API_HOST } from "./consts";
 
 async function fetchReceipts(address: string): Promise<BottleReceipt> {
-  const response = await fetch(`${API_HOST}/bigbottle/cardinfo`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      wallet_address: address,
-    }),
-  });
-  const data = await response.json();
+  try {
+    const response = await fetch(`${API_HOST}/bigbottle/cardinfo`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        wallet_address: address,
+      }),
+    });
+    const data = await response.json();
 
-  if (response.ok) {
-    if (data.code === 200) {
-      return {
-        status: BottleStatus.COMPLETED,
-        ...data.data,
-      };
-    } else {
-      return {
-        status: BottleStatus.FAILED,
-      };
+    if (response.ok) {
+      if (data.code === 200) {
+        return {
+          status: BottleStatus.COMPLETED,
+          drinkName: data.data.drink_name,
+          drinkCapacity: data.data.drink_capacity,
+          drinkAmount: data.data.drink_amout,
+          points: data.data.points,
+        };
+      } else {
+        return {
+          status: BottleStatus.FAILED,
+        };
+      }
     }
-  }
 
-  return {
-    status: BottleStatus.FAILED,
-  };
+    return {
+      status: BottleStatus.FAILED,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      status: BottleStatus.FAILED,
+    };
+  }
 }
 
 export function useReceipts() {
