@@ -1,44 +1,39 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  Text,
-  useDisclosure,
-  VStack,
-  Image,
-  Flex,
-  Icon,
-  useToast,
-  Progress,
-} from "@chakra-ui/react";
-import CameraModal from "./CameraModal";
-import FA from "react-fontawesome";
+import React, { useState, useEffect } from "react";
+import { Box, Text, Flex, useToast, Progress, Spinner } from "@chakra-ui/react";
+import { WebcamCaptureModal } from "./WebcamCapture";
 
 interface PhotoUploaderProps {
   onImageSelected: (fileUrl: string, fileKey: string) => void;
-  title?: string;
-  description?: string;
+  initialValue?: string;
 }
 
 const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
   onImageSelected,
-  title = "Upload Photo",
-  description = "Please take or upload a bottle photo",
+  initialValue,
 }) => {
-  const { isOpen, onOpen, onClose } = useDisclosure();
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | undefined>(
+    initialValue
+  );
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const toast = useToast();
+  const [isCameraOpen, setIsCameraOpen] = useState(true);
 
-  // Handle camera capture result
+  // Auto-open camera when no preview image is available
+  useEffect(() => {
+    if (!previewImage) {
+      setIsCameraOpen(true);
+    }
+  }, [previewImage]);
+
+  const closeCamera = () => setIsCameraOpen(false);
+
   const handleCapturedImage = (imageData: string) => {
     setPreviewImage(imageData);
 
-    // Convert base64 to File object
+    // Convert base64 image to File object
     fetch(imageData)
       .then((res) => res.blob())
       .then((blob) => {
@@ -46,62 +41,43 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
           type: "image/jpeg",
         });
         uploadViaServer(file);
+      })
+      .catch((error) => {
+        console.error("Image conversion failed:", error);
+        toast({
+          title: "Image processing failed",
+          status: "error",
+          duration: 3000,
+        });
       });
-  };
-
-  // Handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (files && files.length > 0) {
-      const file = files[0];
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        setPreviewImage(reader.result as string);
-      };
-
-      reader.readAsDataURL(file);
-      uploadViaServer(file);
-    }
-  };
-
-  // Trigger file selection dialog
-  const handleUploadClick = () => {
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  };
-
-  // Clear selected image
-  const handleClear = () => {
-    setPreviewImage(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
   };
 
   const uploadViaServer = async (file: File) => {
     try {
       setIsUploading(true);
 
-      // 创建 FormData 对象
+      // Create form data
       const formData = new FormData();
       formData.append("file", file);
 
-      // 更新进度的函数
-      const updateProgress = (event: ProgressEvent) => {
-        if (event.lengthComputable) {
-          const progress = Math.round((event.loaded * 100) / event.total);
-          setUploadProgress(progress);
-        }
-      };
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev >= 95) {
+            clearInterval(progressInterval);
+            return 95;
+          }
+          return prev + 5;
+        });
+      }, 100);
 
-      // 使用服务器端端点上传
+      // Upload to server
       const response = await fetch("/api/uploads", {
         method: "POST",
         body: formData,
-        // 不能直接设置 onUploadProgress，使用 XHR 代替
       });
+
+      clearInterval(progressInterval);
 
       if (!response.ok) {
         throw new Error("Server upload failed");
@@ -110,14 +86,13 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
       const { fileUrl, fileKey } = await response.json();
       setPreviewImage(fileUrl);
       onImageSelected(fileUrl, fileKey);
+      setUploadProgress(100);
 
       toast({
         title: "Upload successful",
         status: "success",
         duration: 2000,
       });
-
-      return fileUrl;
     } catch (error) {
       console.error("Upload error:", error);
       toast({
@@ -126,93 +101,95 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
         status: "error",
         duration: 3000,
       });
-      return null;
     } finally {
       setIsUploading(false);
     }
   };
 
   return (
-    <Box borderWidth="1px" borderRadius="md" p={4} bg="white">
-      <VStack spacing={4} align="stretch">
-        <Text fontWeight="bold" fontSize="lg">
-          {title}
-        </Text>
-
-        {!previewImage ? (
-          <>
-            <Text fontSize="sm" color="gray.500">
-              {description}
-            </Text>
-
-            <Flex gap={2}>
-              <Button
-                flex={1}
-                leftIcon={<Icon as={() => <FA name="camera" />} />}
+    <Box>
+      <Flex
+        direction="column"
+        align="center"
+        justify="center"
+        p={4}
+        borderWidth="1px"
+        borderStyle="dashed"
+        borderColor="gray.300"
+        borderRadius="md"
+        bg="gray.50"
+        minH="200px"
+        position="relative"
+      >
+        {isUploading && (
+          <Box
+            position="absolute"
+            top="0"
+            left="0"
+            right="0"
+            bottom="0"
+            bg="rgba(255, 255, 255, 0.8)"
+            zIndex="2"
+            display="flex"
+            flexDirection="column"
+            alignItems="center"
+            justifyContent="center"
+          >
+            <Spinner size="xl" mb={4} color="primary.500" />
+            <Text mb={2}>Uploading photo...</Text>
+            <Box w="80%" maxW="300px">
+              <Progress
+                value={uploadProgress}
+                size="sm"
                 colorScheme="primary"
-                onClick={onOpen}
-                isDisabled={isUploading}
-              >
-                Take Photo
-              </Button>
-
-              <Button
-                flex={1}
-                leftIcon={<Icon as={() => <FA name="upload" />} />}
-                variant="outline"
-                colorScheme="primary"
-                onClick={handleUploadClick}
-                isDisabled={isUploading}
-              >
-                Upload
-              </Button>
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                style={{ display: "none" }}
-                accept="image/*"
-                onChange={handleFileChange}
+                borderRadius="full"
               />
-            </Flex>
-          </>
-        ) : (
-          <Box position="relative">
-            <Image
+            </Box>
+          </Box>
+        )}
+
+        {previewImage ? (
+          <Box position="relative" w="100%">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={previewImage}
               alt="Preview"
-              borderRadius="md"
-              maxH="200px"
-              mx="auto"
+              style={{
+                width: "100%",
+                height: "auto",
+                maxHeight: "300px",
+                objectFit: "contain",
+                borderRadius: "4px",
+              }}
             />
-
-            <Button
-              position="absolute"
-              bottom="8px"
-              right="8px"
-              colorScheme="red"
-              size="sm"
-              onClick={handleClear}
-              isDisabled={isUploading}
-            >
-              <Icon as={() => <FA name="trash" />} />
-            </Button>
           </Box>
+        ) : (
+          <Text color="gray.500">
+            Camera not open. Click retake to open camera.
+          </Text>
         )}
+      </Flex>
 
-        {isUploading && (
-          <Box mt={2}>
-            <Text fontSize="sm" mb={1}>
-              Uploading... {uploadProgress}%
-            </Text>
-            <Progress value={uploadProgress} size="sm" colorScheme="primary" />
+      {previewImage && (
+        <Flex mt={4} justify="center">
+          <Box
+            as="button"
+            onClick={() => setIsCameraOpen(true)}
+            py={2}
+            px={4}
+            borderRadius="md"
+            bg="gray.200"
+            _hover={{ bg: "gray.300" }}
+            _active={{ bg: "gray.400" }}
+          >
+            Retake
           </Box>
-        )}
-      </VStack>
+        </Flex>
+      )}
 
-      <CameraModal
-        isOpen={isOpen}
-        onClose={onClose}
+      <WebcamCaptureModal
+        isOpen={isCameraOpen}
+        onClose={closeCamera}
         onCapture={handleCapturedImage}
       />
     </Box>
