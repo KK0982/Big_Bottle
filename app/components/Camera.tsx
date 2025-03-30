@@ -181,47 +181,6 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     checkPermissions();
   }, []);
 
-  // 在 return 语句前添加样式
-  const styles = {
-    cameraContainer: {
-      position: "relative",
-      width: "100%",
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    initializingOverlay: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.7)",
-      color: "white",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 10,
-    },
-    errorOverlay: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: "rgba(255, 0, 0, 0.1)",
-      color: "white",
-      padding: "20px",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 10,
-    },
-  };
-
   return (
     <Box
       width="100%"
@@ -250,30 +209,62 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
       )}
 
       {isCameraOpen && !capturedImage && (
-        <div style={styles.cameraContainer}>
+        <Box
+          position="relative"
+          width="100%"
+          height="100%"
+          display="flex"
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+        >
           {isInitializing && (
-            <div style={styles.initializingOverlay}>
-              <span>正在初始化摄像头...</span>
-            </div>
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              backgroundColor="rgba(0, 0, 0, 0.7)"
+              color="white"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              zIndex={10}
+            >
+              <Text>正在初始化摄像头...</Text>
+            </Box>
           )}
           {cameraError && (
-            <div style={styles.errorOverlay}>
-              <p>摄像头错误: {cameraError}</p>
+            <Box
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              backgroundColor="rgba(255, 0, 0, 0.1)"
+              color="white"
+              padding="20px"
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              zIndex={10}
+            >
+              <Text mb={4}>摄像头错误: {cameraError}</Text>
               <Button onClick={openCamera}>重试</Button>
-            </div>
+            </Box>
           )}
-          <video
+          <Box
+            as="video"
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            controls={false}
-            style={{
-              width: "100%",
-              height: "auto",
-              maxHeight: "80vh",
-              objectFit: "cover",
-            }}
+            width="100%"
+            height="auto"
+            maxHeight="80vh"
+            sx={{ objectFit: "cover" }}
           />
 
           <Flex
@@ -294,7 +285,7 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
               <Icon as={() => <FA name="camera" />} boxSize="24px" />
             </Button>
           </Flex>
-        </div>
+        </Box>
       )}
 
       {capturedImage && (
