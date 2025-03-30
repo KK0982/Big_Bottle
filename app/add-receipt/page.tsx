@@ -2,13 +2,11 @@
 
 import React, { useState } from "react";
 import { Box, Heading, Button, VStack, useToast } from "@chakra-ui/react";
-import { useRouter } from "next/navigation";
 import MobileLayout from "../components/MobileLayout";
 import S3PhotoUploader from "../components/S3PhotoUploader";
 import { useUploadReceipt } from "../hooks/use-upload-receipt";
 
 export default function AddReceiptPage() {
-  const router = useRouter();
   const toast = useToast();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imageKey, setImageKey] = useState<string | null>(null);
@@ -40,11 +38,7 @@ export default function AddReceiptPage() {
         </Heading>
 
         <VStack spacing={6} align="stretch">
-          <S3PhotoUploader
-            onImageSelected={handleImageSelected}
-            title="Bottle Photo"
-            description="Please take or upload a bottle photo. Make sure the barcode is clearly visible."
-          />
+          <S3PhotoUploader onImageSelected={handleImageSelected} />
 
           <Button
             colorScheme="primary"
