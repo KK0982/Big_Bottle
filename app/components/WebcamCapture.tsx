@@ -80,7 +80,12 @@ export function WebcamCapture({
   };
 
   return (
-    <Box position="relative" height="100%" width="100%" bg="black">
+    <Box
+      position="relative"
+      height="calc(100vh - var(--safe-area-top) - var(--safe-area-bottom))"
+      width="calc(100vw - var(--safe-area-left) - var(--safe-area-right))"
+      bg="black"
+    >
       {!capturedImage ? (
         // Camera interface
         <>
