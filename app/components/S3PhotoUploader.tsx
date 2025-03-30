@@ -191,6 +191,7 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
         isOpen={isCameraOpen}
         onClose={closeCamera}
         onCapture={handleCapturedImage}
+        returnToHome={true}
       />
     </Box>
   );

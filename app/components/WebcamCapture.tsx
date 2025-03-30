@@ -11,18 +11,22 @@ import {
   ModalContent,
 } from "@chakra-ui/react";
 import { ChevronLeftIcon, RepeatIcon } from "@chakra-ui/icons";
+import { useRouter } from "next/navigation";
 
 interface WebcamCaptureProps {
   onCapture: (imageData: string) => void;
   onClose?: () => void;
   isOpen?: boolean;
+  returnToHome?: boolean;
 }
 
 export function WebcamCapture({
   onCapture,
   onClose,
   isOpen = true,
+  returnToHome = false,
 }: WebcamCaptureProps) {
+  const router = useRouter();
   const webcamRef = useRef<Webcam>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
@@ -60,8 +64,12 @@ export function WebcamCapture({
   }, [capturedImage, onCapture, onClose]);
 
   const handleClose = useCallback(() => {
-    if (onClose) onClose();
-  }, [onClose]);
+    if (returnToHome) {
+      router.push("/");
+    } else if (onClose) {
+      onClose();
+    }
+  }, [onClose, returnToHome, router]);
 
   if (!isOpen) return null;
 
@@ -112,7 +120,7 @@ export function WebcamCapture({
             />
           </Box>
 
-          {/* Bottom action area */}
+          {/* Bottom action area with safe-area-bottom */}
           <Box
             position="absolute"
             bottom="0"
@@ -120,6 +128,7 @@ export function WebcamCapture({
             right="0"
             py={8}
             pb={12}
+            paddingBottom="calc(var(--safe-area-bottom, 0px) + 3rem)"
             bg="linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 100%)"
             zIndex={2}
           >
@@ -208,7 +217,7 @@ export function WebcamCapture({
             <IconButton
               aria-label="Back"
               icon={<ChevronLeftIcon boxSize="24px" />}
-              onClick={retake}
+              onClick={returnToHome ? handleClose : retake}
               color="white"
               bg="transparent"
               _hover={{ bg: "rgba(255,255,255,0.1)" }}
@@ -217,14 +226,14 @@ export function WebcamCapture({
             />
           </Box>
 
-          {/* Preview bottom action area */}
+          {/* Preview bottom action area with safe-area-bottom */}
           <Box
             position="absolute"
             bottom="0"
             left="0"
             right="0"
             py={8}
-            pb={12}
+            paddingBottom="calc(var(--safe-area-bottom, 0px) + 3rem)"
             bg="linear-gradient(to top, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 100%)"
             zIndex={2}
           >
@@ -237,7 +246,7 @@ export function WebcamCapture({
               mx="auto"
             >
               <Button
-                onClick={retake}
+                onClick={returnToHome ? handleClose : retake}
                 color="white"
                 bg="rgba(255,255,255,0.2)"
                 _hover={{ bg: "rgba(255,255,255,0.3)" }}
@@ -246,7 +255,7 @@ export function WebcamCapture({
                 minWidth="120px"
                 fontSize="18px"
               >
-                Retake
+                {returnToHome ? "Cancel" : "Retake"}
               </Button>
 
               <Button
@@ -274,6 +283,7 @@ export function WebcamCaptureModal({
   onCapture,
   isOpen = false,
   onClose,
+  returnToHome = false,
 }: WebcamCaptureProps) {
   return (
     <Modal
@@ -283,8 +293,23 @@ export function WebcamCaptureModal({
       motionPreset="slideInBottom"
     >
       <ModalOverlay bg="black" />
-      <ModalContent height="100vh" margin={0} borderRadius={0} bg="black">
-        <WebcamCapture onCapture={onCapture} onClose={onClose} />
+      <ModalContent
+        height="100vh"
+        margin={0}
+        borderRadius={0}
+        bg="black"
+        sx={{
+          // Support for iOS safe areas
+          "--safe-area-top": "env(safe-area-inset-top, 0px)",
+          "--safe-area-bottom": "env(safe-area-inset-bottom, 0px)",
+          paddingTop: "var(--safe-area-top)",
+        }}
+      >
+        <WebcamCapture
+          onCapture={onCapture}
+          onClose={onClose}
+          returnToHome={returnToHome}
+        />
       </ModalContent>
     </Modal>
   );
