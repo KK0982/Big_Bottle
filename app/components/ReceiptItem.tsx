@@ -5,6 +5,7 @@ import { ErrorIcon } from "./icons/error";
 import BottleIcon from "./icons/BottleIcon";
 import { ProcessingIcon } from "./icons/Processing";
 import { EmptyReceipt } from "./EmptyReceipt";
+import dayjs from "dayjs";
 
 export function ReceiptItem({ receipt }: { receipt: BottleReceipt }) {
   if (receipt.status === BottleStatus.EMPTY) {
@@ -55,13 +56,16 @@ export function ReceiptItem({ receipt }: { receipt: BottleReceipt }) {
         </Box>
         <SuccessIcon width={40} height={40} />
       </Flex>
-      <Flex justifyContent="space-between" mt={4}>
+      <Flex justifyContent="space-between" mt={4} alignItems="end">
         <Box display="flex" alignItems="center" gap={1}>
           <BottleIcon />
           <Text fontSize="24px" lineHeight="24px" fontWeight="600">
             {receipt.points} POINTS
           </Text>
         </Box>
+        <Text fontSize="14px" lineHeight="14px" fontWeight="400">
+          {dayjs(receipt.receiptUploadTime).format("DD/MM/YY HH:mm")}
+        </Text>
       </Flex>
     </Box>
   );

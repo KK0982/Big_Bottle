@@ -10,6 +10,7 @@ export interface SuccessBottleReceipt {
   drinkCapacity: number;
   drinkAmount: number;
   points: number;
+  receiptUploadTime: string;
   status: BottleStatus.COMPLETED;
 }
 
