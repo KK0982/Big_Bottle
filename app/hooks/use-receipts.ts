@@ -4,9 +4,15 @@ import { BottleReceipt, BottleStatus } from "./types";
 import { API_HOST } from "./consts";
 
 async function fetchReceipts(address: string): Promise<BottleReceipt> {
-  const response = await fetch(
-    `${API_HOST}/bigbottle/cardinfo?address=${address}`
-  );
+  const response = await fetch(`${API_HOST}/bigbottle/cardinfo`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      wallet_address: address,
+    }),
+  });
   const data = await response.json();
 
   if (response.ok) {
@@ -40,5 +46,6 @@ export function useReceipts() {
       return fetchReceipts(address);
     },
     enabled: isConnected && !!address,
+    refetchOnMount: true,
   });
 }
