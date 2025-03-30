@@ -21,10 +21,11 @@ async function fetchReceipts(address: string): Promise<BottleReceipt> {
         case 200:
           return {
             status: BottleStatus.COMPLETED,
-            drinkName: data.data.drink_name,
-            drinkCapacity: data.data.drink_capacity,
-            drinkAmount: data.data.drink_amout,
-            points: data.data.points,
+            drinkName: data.data.drink_name as string,
+            drinkCapacity: Number(data.data.drink_capacity) as number,
+            drinkAmount: Number(data.data.drink_amout) as number,
+            points: Number(data.data.points) as number,
+            receiptUploadTime: data.data.receipt_upload_time as string,
           };
         case 305:
           return {
