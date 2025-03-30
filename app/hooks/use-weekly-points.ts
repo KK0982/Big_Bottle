@@ -1,20 +1,23 @@
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@vechain/vechain-kit";
-
-function sleep(time: number) {
-  return new Promise((resolve) => setTimeout(resolve, time));
-}
-
-async function mockWeeklyPoints() {
-  await sleep(3000);
-
-  return 100;
-}
+import { API_HOST } from "./consts";
 
 async function fetchWeeklyPoints() {
-  await sleep(3000);
+  try {
+    const response = await fetch(`${API_HOST}/bigbottle/weekpoints`, {
+      method: "POST",
+    });
+    const data = await response.json();
 
-  return mockWeeklyPoints();
+    if (data.code !== 200) {
+      return 0;
+    }
+
+    return Number(data.data.week_points);
+  } catch (error) {
+    console.error(error);
+    return 0;
+  }
 }
 
 export function useWeeklyPoints() {

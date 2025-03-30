@@ -64,7 +64,7 @@ export function ReceiptItem({ receipt }: { receipt: BottleReceipt }) {
           </Text>
         </Box>
         <Text fontSize="14px" lineHeight="14px" fontWeight="400">
-          {dayjs(receipt.receiptUploadTime).format("DD/MM/YY HH:mm")}
+          {dayjs(receipt.receiptUploadTime).format("DD/MM/YYYY HH:mm")}
         </Text>
       </Flex>
     </Box>
