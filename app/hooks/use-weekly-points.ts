@@ -41,6 +41,6 @@ export function useWeeklyPoints() {
       return fetchWeeklyPoints(address);
     },
     enabled: isConnected && !!address,
-    refetchInterval: 1000 * 10,
+    refetchOnMount: true,
   });
 }
