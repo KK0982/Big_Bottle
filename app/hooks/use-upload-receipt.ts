@@ -2,7 +2,7 @@ import { useMutation } from "@tanstack/react-query";
 import { API_HOST } from "./consts";
 import { useWallet } from "@vechain/vechain-kit";
 import { useToast } from "@chakra-ui/react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 function uploadReceipt(image: string, address: string) {
   return fetch(`${API_HOST}/bigbottle/process`, {
