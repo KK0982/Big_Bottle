@@ -5,7 +5,7 @@ import { API_HOST } from "./consts";
 
 async function fetchReceipts(address: string): Promise<BottleReceipt> {
   const response = await fetch(`${API_HOST}/bigbottle/cardinfo`, {
-    method: "GET",
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
@@ -46,6 +46,5 @@ export function useReceipts() {
       return fetchReceipts(address);
     },
     enabled: isConnected && !!address,
-    refetchOnMount: true,
   });
 }
