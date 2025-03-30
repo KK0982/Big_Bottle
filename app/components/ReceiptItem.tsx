@@ -4,8 +4,13 @@ import { SuccessIcon } from "./icons/success";
 import { ErrorIcon } from "./icons/error";
 import BottleIcon from "./icons/BottleIcon";
 import { ProcessingIcon } from "./icons/Processing";
+import { EmptyReceipt } from "./EmptyReceipt";
 
 export function ReceiptItem({ receipt }: { receipt: BottleReceipt }) {
+  if (receipt.status === BottleStatus.EMPTY) {
+    return <EmptyReceipt />;
+  }
+
   if (receipt.status === BottleStatus.FAILED) {
     return (
       <Box borderRadius={20} background="white" minH="120px" p={4}>

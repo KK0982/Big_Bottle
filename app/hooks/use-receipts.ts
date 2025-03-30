@@ -17,18 +17,23 @@ async function fetchReceipts(address: string): Promise<BottleReceipt> {
     const data = await response.json();
 
     if (response.ok) {
-      if (data.code === 200) {
-        return {
-          status: BottleStatus.COMPLETED,
-          drinkName: data.data.drink_name,
-          drinkCapacity: data.data.drink_capacity,
-          drinkAmount: data.data.drink_amout,
-          points: data.data.points,
-        };
-      } else {
-        return {
-          status: BottleStatus.FAILED,
-        };
+      switch (data.code) {
+        case 200:
+          return {
+            status: BottleStatus.COMPLETED,
+            drinkName: data.data.drink_name,
+            drinkCapacity: data.data.drink_capacity,
+            drinkAmount: data.data.drink_amout,
+            points: data.data.points,
+          };
+        case 305:
+          return {
+            status: BottleStatus.EMPTY,
+          };
+        default:
+          return {
+            status: BottleStatus.FAILED,
+          };
       }
     }
 
