@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useEffect } from "react";
 import Webcam from "react-webcam";
 import {
   Box,
@@ -33,6 +33,31 @@ export function WebcamCapture({
     "environment"
   );
   const toast = useToast();
+
+  // Use state to store real viewport height
+  const [viewportHeight, setViewportHeight] = useState("100vh");
+
+  // Calculate and set real viewport height
+  useEffect(() => {
+    const updateHeight = () => {
+      // Get the actual viewport height
+      const vh = window.innerHeight;
+      document.documentElement.style.setProperty("--real-vh", `${vh}px`);
+      setViewportHeight(`${vh}px`);
+    };
+
+    // Set the height initially
+    updateHeight();
+
+    // Update height when resize or orientation changes
+    window.addEventListener("resize", updateHeight);
+    window.addEventListener("orientationchange", updateHeight);
+
+    return () => {
+      window.removeEventListener("resize", updateHeight);
+      window.removeEventListener("orientationchange", updateHeight);
+    };
+  }, []);
 
   const capture = useCallback(() => {
     const imageSrc = webcamRef.current?.getScreenshot();
@@ -82,9 +107,10 @@ export function WebcamCapture({
   return (
     <Box
       position="relative"
-      height="calc(100vh - var(--safe-area-top) - var(--safe-area-bottom))"
+      height={`calc(${viewportHeight} - var(--safe-area-top) - var(--safe-area-bottom))`}
       width="calc(100vw - var(--safe-area-left) - var(--safe-area-right))"
       bg="black"
+      overflow="hidden" // Prevent any possible scrolling
     >
       {!capturedImage ? (
         // Camera interface
@@ -290,6 +316,30 @@ export function WebcamCaptureModal({
   onClose,
   returnToHome = false,
 }: WebcamCaptureProps) {
+  // Use ref to store modal content element
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Set modal content height
+  useEffect(() => {
+    if (isOpen && contentRef.current) {
+      const setModalHeight = () => {
+        if (contentRef.current) {
+          // Use window.innerHeight directly for the modal
+          contentRef.current.style.height = `${window.innerHeight}px`;
+        }
+      };
+
+      setModalHeight();
+      window.addEventListener("resize", setModalHeight);
+      window.addEventListener("orientationchange", setModalHeight);
+
+      return () => {
+        window.removeEventListener("resize", setModalHeight);
+        window.removeEventListener("orientationchange", setModalHeight);
+      };
+    }
+  }, [isOpen]);
+
   return (
     <Modal
       isOpen={isOpen}
@@ -299,15 +349,25 @@ export function WebcamCaptureModal({
     >
       <ModalOverlay bg="black" />
       <ModalContent
-        height="100vh"
+        ref={contentRef}
         margin={0}
         borderRadius={0}
         bg="black"
         sx={{
+          // Initial height, will be updated by the useEffect
+          height: "100%",
           // Support for iOS safe areas
           "--safe-area-top": "env(safe-area-inset-top, 0px)",
           "--safe-area-bottom": "env(safe-area-inset-bottom, 0px)",
+          "--safe-area-left": "env(safe-area-inset-left, 0px)",
+          "--safe-area-right": "env(safe-area-inset-right, 0px)",
           paddingTop: "var(--safe-area-top)",
+          overflow: "hidden", // Prevent scrolling
+          position: "fixed", // Make sure it stays fixed
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
         }}
       >
         <WebcamCapture
