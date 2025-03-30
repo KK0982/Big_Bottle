@@ -3,6 +3,11 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
 import { Box, Button, Flex, VStack, Text, Icon } from "@chakra-ui/react";
 import FA from "react-fontawesome";
+
+// 添加全局变量检查
+const isImageCaptureSupported =
+  typeof window !== "undefined" && "ImageCapture" in window;
+
 interface CameraProps {
   onCapture: (imageData: string) => void;
   onClose?: () => void;
@@ -21,8 +26,8 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     "environment"
   );
 
-  // 使用图像捕获API
-  const imageCapture = useRef<ImageCapture | null>(null);
+  // 使用图像捕获API（添加类型安全性）
+  const imageCapture = useRef<any>(null);
 
   // Open camera
   const openCamera = useCallback(async () => {
@@ -45,13 +50,19 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
         videoRef.current.onloadedmetadata = () => {
           videoRef.current?.play();
 
-          // 初始化 ImageCapture
-          if (videoRef.current && videoRef.current.srcObject) {
+          // 初始化 ImageCapture (仅在支持的浏览器)
+          if (
+            isImageCaptureSupported &&
+            videoRef.current &&
+            videoRef.current.srcObject
+          ) {
             const track = (
               videoRef.current.srcObject as MediaStream
             ).getVideoTracks()[0];
             if (track) {
-              imageCapture.current = new ImageCapture(track);
+              // 使用类型断言
+              const ImageCaptureApi = (window as any).ImageCapture;
+              imageCapture.current = new ImageCaptureApi(track);
             }
           }
 
@@ -67,21 +78,20 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     }
   }, [facingMode]);
 
-  // 修改拍照函数使用 ImageCapture
+  // 修改拍照函数添加兼容性检查
   const takePhoto = async () => {
-    if (imageCapture.current) {
+    if (isImageCaptureSupported && imageCapture.current) {
       try {
         const blob = await imageCapture.current.takePhoto();
         const url = URL.createObjectURL(blob);
         setCapturedImage(url);
-        setIsCameraOpen(false);
       } catch (error) {
-        console.error("拍照失败:", error);
+        console.error("ImageCapture API 拍照失败:", error);
         // 回退到 canvas 方法
         captureFromVideo();
       }
     } else {
-      // 回退到 canvas 方法
+      // 不支持 ImageCapture，使用 canvas 回退
       captureFromVideo();
     }
   };
@@ -171,6 +181,47 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
     checkPermissions();
   }, []);
 
+  // 在 return 语句前添加样式
+  const styles = {
+    cameraContainer: {
+      position: "relative",
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    initializingOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(0, 0, 0, 0.7)",
+      color: "white",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 10,
+    },
+    errorOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: "rgba(255, 0, 0, 0.1)",
+      color: "white",
+      padding: "20px",
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      zIndex: 10,
+    },
+  };
+
   return (
     <Box
       width="100%"
@@ -199,14 +250,14 @@ const Camera: React.FC<CameraProps> = ({ onCapture, onClose }) => {
       )}
 
       {isCameraOpen && !capturedImage && (
-        <div className="camera-container">
+        <div style={styles.cameraContainer}>
           {isInitializing && (
-            <div className="initializing-overlay">
+            <div style={styles.initializingOverlay}>
               <span>正在初始化摄像头...</span>
             </div>
           )}
           {cameraError && (
-            <div className="error-overlay">
+            <div style={styles.errorOverlay}>
               <p>摄像头错误: {cameraError}</p>
               <Button onClick={openCamera}>重试</Button>
             </div>
