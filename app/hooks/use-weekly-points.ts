@@ -4,7 +4,7 @@ import { API_HOST } from "./consts";
 
 async function fetchWeeklyPoints(address: string) {
   try {
-    const response = await fetch(`${API_HOST}/bigbottle/weekpoints`, {
+    const response = await fetch(`${API_HOST}/weekpoints`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

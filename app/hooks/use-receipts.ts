@@ -5,7 +5,7 @@ import { API_HOST } from "./consts";
 
 async function fetchReceipts(address: string): Promise<BottleReceipt> {
   try {
-    const response = await fetch(`${API_HOST}/bigbottle/cardinfo`, {
+    const response = await fetch(`${API_HOST}/cardinfo`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
