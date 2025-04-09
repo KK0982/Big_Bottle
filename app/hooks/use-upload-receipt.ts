@@ -5,7 +5,7 @@ import { useToast } from "@chakra-ui/react";
 import { useRouter } from "next/navigation";
 
 function uploadReceipt(image: string, address: string) {
-  return fetch(`${API_HOST}/bigbottle/process`, {
+  return fetch(`${API_HOST}/process`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
