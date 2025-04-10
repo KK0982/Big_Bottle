@@ -1,1 +1,1 @@
-export const API_HOST = "https://13.210.252.196/bigbottle/vefuture";
+export const API_HOST = "https://api.bigbottle.vet/bigbottle/vefuture";
