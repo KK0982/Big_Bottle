@@ -34,7 +34,7 @@ export default function AddReceiptPage() {
     <MobileLayout title="Add Receipt">
       <Box my={4}>
         <Heading size="lg" mb={6}>
-          Upload Bottle Photo
+          Upload Bottle Receipt
         </Heading>
 
         <VStack spacing={6} align="stretch">

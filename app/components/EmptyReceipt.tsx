@@ -28,15 +28,28 @@ export function EmptyReceipt() {
         />
       </svg>
 
-      <Text
+      <Box
+        mt={2}
+        display="flex"
+        flexDirection="column"
+        gap={1}
         fontSize="14px"
         lineHeight="20px"
         fontWeight="400"
         color="rgba(0, 0, 0, 0.5)"
       >
-        You don&apos;t have a receipt at present. Upload your drink receipt to
-        earn points!
-      </Text>
+        <Text _before={{ content: '"1."', mr: 2 }}>
+          Receipt: Must be from this week; clearly show date, drink name,
+          volume.
+        </Text>
+        <Text _before={{ content: '"2."', mr: 2 }}>
+          Points: By volume &lt;700ml=1pt, 700-2000ml=10pts, ≥2000ml=15pts.
+        </Text>
+        <Text _before={{ content: '"3."', mr: 2 }}>
+          Payout: $B3TR paid Tuesdays (based on last week's points share); 300
+          weekly cap.
+        </Text>
+      </Box>
     </Box>
   );
 }
