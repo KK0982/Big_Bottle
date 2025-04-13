@@ -1,33 +1,36 @@
 import { Box, Flex, Text } from "@chakra-ui/react";
 import { BottleReceipt } from "../hooks/types";
 import { SuccessIcon } from "./icons/success";
-// import { ErrorIcon } from "./icons/error";
+import { ErrorIcon } from "./icons/error";
 import BottleIcon from "./icons/BottleIcon";
 // import { ProcessingIcon } from "./icons/Processing";
-// import { EmptyReceipt } from "./EmptyReceipt";
 import dayjs from "dayjs";
 
 export function ReceiptItem({ receipt }: { receipt: BottleReceipt }) {
-  // NO other status, but we keep it for future use
-  // if (receipt.status === BottleStatus.FAILED) {
-  //   return (
-  //     <Box borderRadius={20} background="white" minH="120px" p={4}>
-  //       <Flex justifyContent="space-between">
-  //         <Text
-  //           fontSize="18px"
-  //           lineHeight="24px"
-  //           fontWeight="600"
-  //           color="error"
-  //         >
-  //           Your receipt doesn&apos;t meet the requirements
-  //         </Text>
-  //         <ErrorIcon width={40} height={40} />
-  //       </Flex>
-  //     </Box>
-  //   );
-  // }
+  if (receipt.status === "unusable" || receipt.status === "timeout") {
+    return (
+      <Box borderRadius={20} background="white" minH="120px" p={4}>
+        <Flex justifyContent="space-between">
+          <Text
+            fontSize="18px"
+            lineHeight="24px"
+            fontWeight="600"
+            color="error"
+          >
+            Your receipt doesn&apos;t meet the requirements
+          </Text>
+          <ErrorIcon width={40} height={40} />
+        </Flex>
+        <Flex justifyContent="end" mt={4} alignItems="end">
+          <Text fontSize="14px" lineHeight="14px" fontWeight="400">
+            {dayjs(receipt.receiptUploadTime).format("DD/MM/YYYY HH:mm")}
+          </Text>
+        </Flex>
+      </Box>
+    );
+  }
 
-  // if (receipt.status === BottleStatus.PROCESSING) {
+  // if (receipt.status === "timeout") {
   //   return (
   //     <Box borderRadius={20} background="white" minH="120px" p={4}>
   //       <Flex justifyContent="space-between">

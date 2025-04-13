@@ -19,13 +19,28 @@ async function fetchReceipts(address: string): Promise<BottleReceipt[]> {
     if (response.ok) {
       switch (data.code) {
         case 200:
-          return (data.data?.drink_infos ?? []).map((info: any) => ({
-            drinkName: info.drink_name as string,
-            drinkCapacity: Number(info.drink_capacity) as number,
-            drinkAmount: Number(info.drink_amout) as number,
-            points: Number(info.points) as number,
-            receiptUploadTime: info.receipt_upload_time as string,
-          }));
+          return (data.data?.drink_infos ?? []).map((info: any) => {
+            const isAvailable = info?.is_availd;
+            const isTimeout = info?.is_time_threshold;
+            const isDeleted = info?.is_delete;
+
+            const status = isDeleted
+              ? "unusable"
+              : isTimeout
+              ? "timeout"
+              : isAvailable
+              ? "available"
+              : "unusable";
+
+            return {
+              drinkName: info.drink_name as string,
+              drinkCapacity: Number(info.drink_capacity) as number,
+              drinkAmount: Number(info.drink_amout) as number,
+              points: Number(info.points) as number,
+              receiptUploadTime: info.receipt_upload_time as string,
+              status,
+            };
+          });
         case 305:
           return [];
         default:

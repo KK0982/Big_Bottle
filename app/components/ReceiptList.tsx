@@ -14,7 +14,7 @@ export function ReceiptList() {
   const isEmpty = data?.length === 0 && !isLoading;
 
   return (
-    <Box mt={3} display="flex" flexDirection="column" gap={3}>
+    <Box mt={3} display="flex" flexDirection="column" pb={20} gap={3}>
       {isConnected ? null : <NotConnect />}
       {isLoading ? <ReceiptLoading /> : null}
       {isEmpty ? <EmptyReceipt /> : null}
