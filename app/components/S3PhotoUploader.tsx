@@ -25,11 +25,6 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
   const toast = useToast();
   const closeCamera = () => setIsCameraOpen(false);
 
-  const handleRetake = () => {
-    setPreviewImage(undefined);
-    setIsCameraOpen(true);
-  };
-
   const handleCapturedImage = (imageData: string) => {
     setPreviewImage(imageData);
 
@@ -167,7 +162,7 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
         )}
       </Flex>
 
-      {previewImage && (
+      {/* {previewImage && (
         <Flex mt={4} justify="center">
           <Box
             as="button"
@@ -182,7 +177,7 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
             Retake
           </Box>
         </Flex>
-      )}
+      )} */}
 
       <WebcamCaptureModal
         isOpen={isCameraOpen}
