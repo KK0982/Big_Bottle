@@ -11,7 +11,7 @@ export default function Home() {
     <MobileLayout title="BigBottle">
       <Box
         width="100%"
-        height="240px"
+        aspectRatio="327/200"
         borderRadius="20px"
         backgroundImage="/images/cover.jpg"
         backgroundSize="cover"
