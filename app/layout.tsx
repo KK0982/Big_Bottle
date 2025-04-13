@@ -3,6 +3,7 @@ import { Roboto } from "next/font/google";
 import "./globals.css";
 import { VeChainProvider } from "./providers/vechain/provider";
 import { ChakraProviders } from "./providers/chakra/provider";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const roboto = Roboto({
   weight: ["400", "500", "700"],
@@ -31,6 +32,7 @@ export default function RootLayout({
         <ChakraProviders>
           <VeChainProvider>{children}</VeChainProvider>
         </ChakraProviders>
+        <SpeedInsights />
       </body>
     </html>
   );
