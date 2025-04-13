@@ -46,8 +46,8 @@ export function EmptyReceipt() {
           Points: By volume &lt;700ml=1pt, 700-2000ml=10pts, ≥2000ml=15pts.
         </Text>
         <Text _before={{ content: '"3."', mr: 2 }}>
-          Payout: $B3TR paid Tuesdays (based on last week's points share); 300
-          weekly cap.
+          Payout: $B3TR paid Tuesdays (based on last week&apos;s points share);
+          300 weekly cap.
         </Text>
       </Box>
     </Box>
