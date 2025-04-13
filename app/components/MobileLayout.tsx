@@ -59,11 +59,11 @@ const MobileLayout = ({
       <Box
         as="main"
         flex="1"
-        overflow="y-auto"
+        overflowY="auto"
         p="24px"
         mt="44px"
         w="full"
-        h="calc(100vh-44px)"
+        h="calc(100vh - 44px)"
       >
         {children}
       </Box>
