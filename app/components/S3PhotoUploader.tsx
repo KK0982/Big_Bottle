@@ -1,17 +1,21 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, MutableRefObject } from "react";
 import { Box, Text, Flex, useToast, Progress, Spinner } from "@chakra-ui/react";
 import { WebcamCaptureModal } from "./WebcamCapture";
 
 interface PhotoUploaderProps {
   onImageSelected: (fileUrl: string, fileKey: string) => void;
   initialValue?: string;
+  isCameraOpen: boolean;
+  setIsCameraOpen: (isCameraOpen: boolean) => void;
 }
 
 const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
   onImageSelected,
   initialValue,
+  isCameraOpen,
+  setIsCameraOpen,
 }) => {
   const [previewImage, setPreviewImage] = useState<string | undefined>(
     initialValue
@@ -19,16 +23,12 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const toast = useToast();
-  const [isCameraOpen, setIsCameraOpen] = useState(true);
-
-  // Auto-open camera when no preview image is available
-  useEffect(() => {
-    if (!previewImage) {
-      setIsCameraOpen(true);
-    }
-  }, [previewImage]);
-
   const closeCamera = () => setIsCameraOpen(false);
+
+  const handleRetake = () => {
+    setPreviewImage(undefined);
+    setIsCameraOpen(true);
+  };
 
   const handleCapturedImage = (imageData: string) => {
     setPreviewImage(imageData);
@@ -113,12 +113,9 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
         align="center"
         justify="center"
         p={4}
-        borderWidth="1px"
-        borderStyle="dashed"
-        borderColor="gray.300"
-        borderRadius="md"
-        bg="gray.50"
-        minH="200px"
+        borderRadius="20px"
+        bg="white"
+        minH="400px"
         position="relative"
       >
         {isUploading && (
@@ -174,7 +171,7 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
         <Flex mt={4} justify="center">
           <Box
             as="button"
-            onClick={() => setIsCameraOpen(true)}
+            onClick={handleRetake}
             py={2}
             px={4}
             borderRadius="md"
@@ -191,7 +188,6 @@ const S3PhotoUploader: React.FC<PhotoUploaderProps> = ({
         isOpen={isCameraOpen}
         onClose={closeCamera}
         onCapture={handleCapturedImage}
-        returnToHome={true}
       />
     </Box>
   );
