@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@vechain/vechain-kit";
-import { BottleReceipt, BottleStatus } from "./types";
+import { BottleReceipt } from "./types";
 import { API_HOST } from "./consts";
 
-async function fetchReceipts(address: string): Promise<BottleReceipt> {
+async function fetchReceipts(address: string): Promise<BottleReceipt[]> {
   try {
     const response = await fetch(`${API_HOST}/cardinfo`, {
       method: "POST",
@@ -19,33 +19,24 @@ async function fetchReceipts(address: string): Promise<BottleReceipt> {
     if (response.ok) {
       switch (data.code) {
         case 200:
-          return {
-            status: BottleStatus.COMPLETED,
-            drinkName: data.data.drink_name as string,
-            drinkCapacity: Number(data.data.drink_capacity) as number,
-            drinkAmount: Number(data.data.drink_amout) as number,
-            points: Number(data.data.points) as number,
-            receiptUploadTime: data.data.receipt_upload_time as string,
-          };
+          return (data.data?.drink_infos ?? []).map((info: any) => ({
+            drinkName: info.drink_name as string,
+            drinkCapacity: Number(info.drink_capacity) as number,
+            drinkAmount: Number(info.drink_amout) as number,
+            points: Number(info.points) as number,
+            receiptUploadTime: info.receipt_upload_time as string,
+          }));
         case 305:
-          return {
-            status: BottleStatus.EMPTY,
-          };
+          return [];
         default:
-          return {
-            status: BottleStatus.FAILED,
-          };
+          return [];
       }
     }
 
-    return {
-      status: BottleStatus.FAILED,
-    };
+    return [];
   } catch (error) {
     console.error(error);
-    return {
-      status: BottleStatus.FAILED,
-    };
+    return [];
   }
 }
 
