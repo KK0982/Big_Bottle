@@ -7,21 +7,19 @@ export async function POST(request: NextRequest) {
     const file = formData.get("file") as File;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "Please provide a file" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
     // Convert file to buffer
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to S3
+    // Upload to S3 with date-based folders
     const result = await uploadFileToS3(buffer, file.name, file.type);
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error uploading file to S3:", error);
+    console.error("Error in upload API:", error);
     return NextResponse.json(
       { error: "Failed to upload file" },
       { status: 500 }

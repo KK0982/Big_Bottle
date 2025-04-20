@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from "uuid";
+import dayjs from "dayjs";
 
 // Initialize S3 client
 const s3Client = new S3Client({
@@ -13,9 +14,12 @@ const s3Client = new S3Client({
 
 // Generate unique filename
 const generateUniqueFileName = (originalFileName: string) => {
+  const now = dayjs();
+  const datePath1 = now.format("YYYY-MM");
+  const datePath2 = now.format("YYYY-MM-DD");
   const fileExtension = originalFileName.split(".").pop();
   const uniqueId = uuidv4();
-  return `uploads/${uniqueId}.${fileExtension}`;
+  return `uploads/${datePath1}/${datePath2}/${uniqueId}.${fileExtension}`;
 };
 
 // Generate presigned URL for direct upload

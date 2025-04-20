@@ -3,6 +3,7 @@
 import React, { useState, useEffect, MutableRefObject } from "react";
 import { Box, Text, Flex, useToast, Progress, Spinner } from "@chakra-ui/react";
 import { WebcamCaptureModal } from "./WebcamCapture";
+import dayjs from "dayjs";
 
 interface PhotoUploaderProps {
   onImageSelected: (fileUrl: string, fileKey: string) => void;
