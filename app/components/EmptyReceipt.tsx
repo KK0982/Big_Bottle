@@ -47,7 +47,7 @@ export function EmptyReceipt() {
         </Text>
         <Text _before={{ content: '"3."', mr: 2 }}>
           Payout: $B3TR paid Tuesdays (based on last week&apos;s points share);
-          300 weekly cap.
+          50 weekly cap.
         </Text>
       </Box>
     </Box>
