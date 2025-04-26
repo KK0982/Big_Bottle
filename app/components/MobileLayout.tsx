@@ -63,7 +63,7 @@ const MobileLayout = ({
         p="24px"
         mt="44px"
         w="full"
-        h="calc(100vh - 44px)"
+        h="calc(100vh - 44px - var(--safe-area-bottom) - var(--safe-area-top))"
       >
         {children}
       </Box>

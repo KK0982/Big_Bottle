@@ -37,11 +37,10 @@ export default function AddReceiptPage() {
 
   return (
     <MobileLayout title="Add Receipt">
-      <Box h="100%" display="flex" flexDirection="column" gap={4}>
+      <Box display="flex" flexDirection="column" gap={4}>
         <Heading fontSize="24px" lineHeight="36px" fontWeight="600" mb={3}>
           Upload Bottle Receipt
         </Heading>
-
         <VStack spacing={6} align="stretch" flex={1}>
           <S3PhotoUploader
             onImageSelected={handleImageSelected}
