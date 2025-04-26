@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
+    "dev": "next dev --turbopack --experimental-https",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -21,6 +21,7 @@
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "next": "15.2.3",
+    "piexifjs": "^1.0.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-fontawesome": "^1.7.1",

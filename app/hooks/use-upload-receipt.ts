@@ -33,6 +33,7 @@ export function useUploadReceipt() {
         title: "Receipt uploaded",
         description: "Your receipt has been uploaded",
         status: "success",
+        position: "top",
       });
       router.push("/");
     },
@@ -41,6 +42,7 @@ export function useUploadReceipt() {
         title: "Receipt upload failed",
         description: "Please try again",
         status: "error",
+        position: "top",
       });
     },
   });
