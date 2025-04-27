@@ -8,17 +8,18 @@ import { ReceiptItem } from "./ReceiptItem";
 
 export function ReceiptList() {
   const { connection } = useWallet();
-  const { data, isLoading } = useReceipts();
+  const { data, isFetching } = useReceipts();
 
   const isConnected = connection.isConnected;
-  const isEmpty = data?.length === 0 && !isLoading;
+  const isEmpty = data?.length === 0 && !isFetching;
+  const isDataLoaded = !isFetching && !isEmpty && data;
 
   return (
     <Box mt={3} display="flex" flexDirection="column" pb={20} gap={3}>
       {isConnected ? null : <NotConnect />}
-      {isLoading ? <ReceiptLoading /> : null}
+      {isFetching ? <ReceiptLoading /> : null}
       {isEmpty ? <EmptyReceipt /> : null}
-      {data &&
+      {isDataLoaded &&
         data.map((receipt) => (
           <ReceiptItem key={receipt.receiptUploadTime} receipt={receipt} />
         ))}

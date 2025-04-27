@@ -85,7 +85,7 @@ export function PhotoCapture({ onImageSelected }: PhotoCaptureProps) {
         </Box>
       ) : (
         <Text color="gray.500">
-          Click the "Take Photo" button to capture a receipt
+          Click the &quot;Take Photo&quot; button to capture a receipt
         </Text>
       )}
     </Flex>
