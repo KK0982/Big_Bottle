@@ -70,14 +70,21 @@ export function PhotoCapture({ onImageSelected }: PhotoCaptureProps) {
       )}
 
       {photoUrl ? (
-        <Box position="relative" w="100%">
+        <Box
+          position="relative"
+          w="100%"
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          overflow="hidden"
+          maxH="350px"
+        >
           <img
             src={photoUrl}
             alt="Preview"
             style={{
-              width: "100%",
-              height: "auto",
-              maxHeight: "300px",
+              maxWidth: "100%",
+              maxHeight: "350px",
               objectFit: "contain",
               borderRadius: "4px",
             }}
