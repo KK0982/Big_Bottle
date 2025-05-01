@@ -28,7 +28,7 @@ export const VeChainProvider = ({ children }: VeChainProviderProps) => {
         darkMode={false}
         language="en"
         network={{
-          type: "test",
+          type: "main",
         }}
       >
         {children}
