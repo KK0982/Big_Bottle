@@ -67,6 +67,7 @@ export function useReceipts() {
 
       return fetchReceipts(address);
     },
+    refetchInterval: 1000 * 15,
     enabled: isConnected && !!address,
   });
 }
