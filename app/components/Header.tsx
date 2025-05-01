@@ -32,7 +32,7 @@ const Header: React.FC<HeaderProps> = ({
       left={0}
       zIndex={50}
     >
-      <Flex alignItems="center">
+      <Flex alignItems="center" gap={1}>
         {leftContent}
         <Link href="/">
           <Logo width={32} height={32} />
@@ -43,10 +43,21 @@ const Header: React.FC<HeaderProps> = ({
           lineHeight="28px"
           textAlign="center"
           color="black"
-          ml={1}
         >
           {title}
         </Text>
+        <Box
+          fontSize="12px"
+          lineHeight="16px"
+          color="#01E35C"
+          background="#01E35C1A"
+          border="1px solid #01E35C1A"
+          borderRadius="8px"
+          px={2}
+          py={1}
+        >
+          Beta
+        </Box>
       </Flex>
       <Flex alignItems="center">
         <ConnectButton />

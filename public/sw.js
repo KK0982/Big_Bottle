@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bigbottle-cache-v2';
+const CACHE_NAME = `bigbottle-cache-${Math.random().toString(36).substring(2, 15)}`;
 const IS_DEVELOPMENT = self.location.hostname === 'localhost' || 
                        self.location.hostname === '127.0.0.1' || 
                        self.location.hostname.includes('192.168.');
