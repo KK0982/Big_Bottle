@@ -16,10 +16,10 @@ async function fetchReceipts(address: string): Promise<BottleReceipt[]> {
       }),
     });
 
-    console.log("data", response);
     const data = await response.json();
     const isWaitingForAnalysis =
       localStorage.getItem("waiting-for-analysis") === "true";
+    localStorage.removeItem("waiting-for-analysis");
 
     if (!response.ok) return [];
 
@@ -85,19 +85,7 @@ export function useReceipts() {
 
       return fetchReceipts(address);
     },
-    // after 15 seconds, refetch the data, then stop the interval
-    refetchInterval: () => {
-      const isWaitingForAnalysis =
-        localStorage.getItem("waiting-for-analysis") === "true";
-
-      if (isWaitingForAnalysis) {
-        // clear waiting-for-analysis from local storage
-        localStorage.removeItem("waiting-for-analysis");
-        return 15000;
-      }
-
-      return false;
-    },
+    refetchInterval: 15000,
     refetchIntervalInBackground: true,
     enabled: isConnected && !!address,
   });

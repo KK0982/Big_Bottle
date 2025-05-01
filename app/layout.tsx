@@ -4,7 +4,6 @@ import "./globals.css";
 import { VeChainProvider } from "./providers/vechain/provider";
 import { ChakraProviders } from "./providers/chakra/provider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 
 const roboto = Roboto({
   weight: ["400", "500", "700"],
@@ -63,10 +62,7 @@ export default function RootLayout({
       </head>
       <body className={`${roboto.className}`}>
         <ChakraProviders>
-          <VeChainProvider>
-            {children}
-            <ServiceWorkerRegistration />
-          </VeChainProvider>
+          <VeChainProvider>{children}</VeChainProvider>
         </ChakraProviders>
         <SpeedInsights />
       </body>
