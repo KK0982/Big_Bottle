@@ -53,8 +53,8 @@ const Header: React.FC<HeaderProps> = ({
           background="#01E35C1A"
           border="1px solid #01E35C1A"
           borderRadius="8px"
-          px={2}
-          py={1}
+          px={"7px"}
+          py={"2px"}
         >
           Beta
         </Box>
