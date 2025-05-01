@@ -5,6 +5,7 @@ import { ErrorIcon } from "./icons/error";
 import BottleIcon from "./icons/BottleIcon";
 // import { ProcessingIcon } from "./icons/Processing";
 import dayjs from "dayjs";
+import { ProcessingIcon } from "./icons/Processing";
 
 export function ReceiptItem({ receipt }: { receipt: BottleReceipt }) {
   if (receipt.status === "unusable" || receipt.status === "timeout") {
@@ -25,6 +26,19 @@ export function ReceiptItem({ receipt }: { receipt: BottleReceipt }) {
           <Text fontSize="14px" lineHeight="14px" fontWeight="400">
             {dayjs(receipt.receiptUploadTime).format("DD/MM/YYYY HH:mm")}
           </Text>
+        </Flex>
+      </Box>
+    );
+  }
+
+  if (receipt.status === "waiting") {
+    return (
+      <Box borderRadius={20} background="white" minH="120px" p={4}>
+        <Flex justifyContent="space-between">
+          <Text fontSize="18px" lineHeight="24px" fontWeight="600">
+            Analyzing your receipt, please wait...
+          </Text>
+          <ProcessingIcon width={40} height={40} />
         </Flex>
       </Box>
     );

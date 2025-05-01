@@ -29,6 +29,8 @@ export function useUploadReceipt() {
       return uploadReceipt(image, address);
     },
     onSuccess: () => {
+      localStorage.setItem("waiting-for-analysis", "true");
+
       toast({
         title: "Receipt uploaded",
         description: "Your receipt has been uploaded",

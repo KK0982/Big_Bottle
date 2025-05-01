@@ -23,7 +23,7 @@ export function ProcessingIcon(props: React.SVGProps<SVGSVGElement>) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeWidth={3.333}
-        d="M28.333 10.833v5.834H22.5"
+        d="M28.333 10.834v5.833H22.5"
       />
     </svg>
   );

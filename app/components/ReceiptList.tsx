@@ -8,11 +8,13 @@ import { ReceiptItem } from "./ReceiptItem";
 
 export function ReceiptList() {
   const { connection } = useWallet();
-  const { data, isFetching } = useReceipts();
+  const { data, isLoading } = useReceipts();
 
   const isConnected = connection.isConnected;
-  const isEmpty = data?.length === 0 && !isFetching;
-  const isDataLoaded = !isFetching && !isEmpty && data;
+  const isEmpty = data?.length === 0;
+  const isFetching = isLoading;
+  // const isDataLoaded = sFetching && !isEmpty && data;
+  const isDataLoaded = data && !isEmpty;
 
   return (
     <Box mt={3} display="flex" flexDirection="column" pb={20} gap={3}>

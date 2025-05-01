@@ -1,4 +1,4 @@
-type Status = "available" | "timeout" | "unusable";
+type Status = "available" | "timeout" | "unusable" | "waiting";
 
 export interface BottleReceipt {
   drinkName: string;

@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@vechain/vechain-kit";
 import { BottleReceipt } from "./types";
 import { API_HOST } from "./consts";
+import dayjs from "dayjs";
 
 async function fetchReceipts(address: string): Promise<BottleReceipt[]> {
   try {
@@ -14,41 +15,56 @@ async function fetchReceipts(address: string): Promise<BottleReceipt[]> {
         wallet_address: address,
       }),
     });
+
+    console.log("data", response);
     const data = await response.json();
+    const isWaitingForAnalysis =
+      localStorage.getItem("waiting-for-analysis") === "true";
 
-    if (response.ok) {
-      switch (data.code) {
-        case 200:
-          return (data.data?.drink_infos ?? []).map((info: any) => {
-            const isAvailable = info?.is_availd;
-            const isTimeout = info?.is_time_threshold;
-            const isDeleted = info?.is_delete;
+    if (!response.ok) return [];
 
-            const status = isDeleted
-              ? "unusable"
-              : isTimeout
-              ? "timeout"
-              : isAvailable
-              ? "available"
-              : "unusable";
+    switch (data.code) {
+      case 200:
+        const list = (data.data?.drink_infos ?? []).map((info: any) => {
+          const isAvailable = info?.is_availd;
+          const isTimeout = info?.is_time_threshold;
+          const isDeleted = info?.is_delete;
 
-            return {
-              drinkName: info.drink_name as string,
-              drinkCapacity: Number(info.drink_capacity) as number,
-              drinkAmount: Number(info.drink_amout) as number,
-              points: Number(info.points) as number,
-              receiptUploadTime: info.receipt_upload_time as string,
-              status,
-            };
+          const status = isDeleted
+            ? "unusable"
+            : isTimeout
+            ? "timeout"
+            : isAvailable
+            ? "available"
+            : "unusable";
+
+          return {
+            drinkName: info.drink_name as string,
+            drinkCapacity: Number(info.drink_capacity) as number,
+            drinkAmount: Number(info.drink_amout) as number,
+            points: Number(info.points) as number,
+            receiptUploadTime: info.receipt_upload_time as string,
+            status,
+          };
+        });
+
+        if (isWaitingForAnalysis) {
+          list.unshift({
+            drinkName: "Waiting for analysis",
+            drinkCapacity: 0,
+            drinkAmount: 0,
+            points: 0,
+            receiptUploadTime: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+            status: "waiting",
           });
-        case 305:
-          return [];
-        default:
-          return [];
-      }
-    }
+        }
 
-    return [];
+        return list;
+      case 305:
+        return [];
+      default:
+        return [];
+    }
   } catch (error) {
     console.error(error);
     return [];
@@ -65,9 +81,24 @@ export function useReceipts() {
     queryFn: () => {
       if (!address) throw new Error("No address");
 
+      console.log(address);
+
       return fetchReceipts(address);
     },
-    refetchInterval: 1000 * 15,
+    // after 15 seconds, refetch the data, then stop the interval
+    refetchInterval: () => {
+      const isWaitingForAnalysis =
+        localStorage.getItem("waiting-for-analysis") === "true";
+
+      if (isWaitingForAnalysis) {
+        // clear waiting-for-analysis from local storage
+        localStorage.removeItem("waiting-for-analysis");
+        return 15000;
+      }
+
+      return false;
+    },
+    refetchIntervalInBackground: true,
     enabled: isConnected && !!address,
   });
 }
