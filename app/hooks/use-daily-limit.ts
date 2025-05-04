@@ -27,9 +27,13 @@ async function fetchDailyLimit(address: string): Promise<DailyLimitResponse> {
     };
   }
 
+  const isWaitingForAnalysis =
+    localStorage.getItem("waiting-for-analysis") === "true";
+  localStorage.removeItem("waiting-for-analysis");
+
   return {
     max: data.data.count_max,
-    current: data.data.count_current,
+    current: Number(data.data.count_current) + (isWaitingForAnalysis ? 1 : 0),
   };
 }
 
@@ -50,6 +54,7 @@ export function useDailyLimit() {
 
       return fetchDailyLimit(address);
     },
+    refetchInterval: 15000,
     refetchOnMount: true,
     enabled: isConnected && !!address,
   });

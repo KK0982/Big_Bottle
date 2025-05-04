@@ -81,12 +81,10 @@ export function useReceipts() {
     queryFn: () => {
       if (!address) throw new Error("No address");
 
-      console.log(address);
-
       return fetchReceipts(address);
     },
     refetchInterval: 15000,
-    refetchIntervalInBackground: true,
+    refetchOnMount: true,
     enabled: isConnected && !!address,
   });
 }
