@@ -54,7 +54,7 @@ export function useDailyLimit() {
 
       return fetchDailyLimit(address);
     },
-    refetchInterval: 15000,
+    refetchInterval: 10000,
     refetchOnMount: true,
     enabled: isConnected && !!address,
   });

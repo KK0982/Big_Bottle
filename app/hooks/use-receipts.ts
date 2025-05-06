@@ -83,7 +83,7 @@ export function useReceipts() {
 
       return fetchReceipts(address);
     },
-    refetchInterval: 15000,
+    refetchInterval: 10000,
     refetchOnMount: true,
     enabled: isConnected && !!address,
   });
