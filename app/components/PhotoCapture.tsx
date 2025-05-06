@@ -91,9 +91,17 @@ export function PhotoCapture({ onImageSelected }: PhotoCaptureProps) {
           />
         </Box>
       ) : (
-        <Text color="gray.500">
-          Click the &quot;Take Photo&quot; button to capture a receipt
-        </Text>
+        <Box color="gray.500" mt={-4}>
+          <Text>
+            Take photo of your real paper receipt from this week. 📸🧾
+          </Text>
+          <Text mt={2}>
+            Don’t waste your shot with:
+            <br /> ❌ Bottle pics
+            <br /> ❌ E-receipts
+            <br /> ❌ Screenshots or screen photos of receipts
+          </Text>
+        </Box>
       )}
     </Flex>
   );
