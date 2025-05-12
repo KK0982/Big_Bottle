@@ -15,7 +15,7 @@ async function fetchBlacklist(address: string) {
 
   const data = await response.json();
 
-  if (data.code !== 200) {
+  if (data.code == 200) {
     return data.data.in_black_list;
   }
 
