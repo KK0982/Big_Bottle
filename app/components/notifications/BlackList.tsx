@@ -1,5 +1,5 @@
 import { Box, Link, Text } from "@chakra-ui/react";
-import { useBlacklist } from "../hooks/use-blacklist";
+import { useBlacklist } from "../../hooks/use-blacklist";
 
 export function BlackList() {
   const { data: isBlacklisted } = useBlacklist();
