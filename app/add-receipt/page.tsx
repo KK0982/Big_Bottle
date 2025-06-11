@@ -1,26 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
-import {
-  Box,
-  Heading,
-  Button,
-  VStack,
-  useToast,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  useDisclosure,
-} from "@chakra-ui/react";
+import React, { useState, useRef } from "react";
+import { Box, Heading, Button, VStack, useToast } from "@chakra-ui/react";
 import MobileLayout from "../components/MobileLayout";
 import { useUploadReceipt } from "../hooks/use-upload-receipt";
 import { PhotoCapture } from "../components/PhotoCapture";
 import { S3PhotoProvider, useS3Photo } from "../contexts/S3PhotoContext";
-import { WebCamera } from "../components/WebCamera";
+import imageCompression from "browser-image-compression";
 
 function AddReceiptContent() {
   const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const {
     photoKey,
     photoFile,
@@ -32,10 +22,51 @@ function AddReceiptContent() {
   } = useS3Photo();
   const { mutate: uploadReceipt, isPending } = useUploadReceipt();
 
-  // Photo capture handler
-  const handleCapture = (file: File) => {
-    capturePhoto(file);
-    onClose();
+  // Handle file selection from camera
+  const handleFileChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      // Compress image before processing
+      const options = {
+        maxSizeMB: 1, // Max file size in MB
+        maxWidthOrHeight: 1920, // Resize image if larger
+        useWebWorker: true, // Use web worker for better performance
+        fileType: "image/jpeg", // Output format
+      };
+
+      const compressedBlob = await imageCompression(file, options);
+      console.log("Original size:", file.size / 1024 / 1024, "MB");
+      console.log("Compressed size:", compressedBlob.size / 1024 / 1024, "MB");
+
+      // Create file from compressed blob
+      const compressedFile = new File(
+        [compressedBlob],
+        `photo-${Date.now()}.jpg`,
+        {
+          type: "image/jpeg",
+        }
+      );
+
+      capturePhoto(compressedFile);
+    } catch (error) {
+      console.error("Error processing captured image:", error);
+      toast({
+        title: "Photo processing failed",
+        description: "Please try again",
+        status: "error",
+        duration: 3000,
+        position: "top",
+      });
+    }
+  };
+
+  // Open camera
+  const handleTakePhoto = () => {
+    fileInputRef.current?.click();
   };
 
   // Submit handler
@@ -103,7 +134,7 @@ function AddReceiptContent() {
           borderWidth="2px"
           size="lg"
           leftIcon={<span className="fa fa-camera" />}
-          onClick={onOpen}
+          onClick={handleTakePhoto}
         >
           Take Photo
         </Button>
@@ -122,30 +153,15 @@ function AddReceiptContent() {
         </Button>
       </Box>
 
-      {/* Camera Modal */}
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        size="full"
-        motionPreset="slideInBottom"
-        isCentered={false}
-      >
-        <ModalOverlay />
-        <ModalContent
-          margin={0}
-          borderRadius={0}
-          position="fixed"
-          top={0}
-          left={0}
-          right={0}
-          bottom={0}
-          height="100%"
-          width="100%"
-          overflow="hidden"
-        >
-          <WebCamera onPhotoCapture={handleCapture} onClose={onClose} />
-        </ModalContent>
-      </Modal>
+      {/* Hidden file input for camera */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleFileChange}
+        style={{ display: "none" }}
+      />
     </Box>
   );
 }

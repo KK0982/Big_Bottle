@@ -6,11 +6,13 @@ import { Button, IconButton, Skeleton, Text } from "@chakra-ui/react";
 import { useWallet } from "@vechain/vechain-kit";
 import AddIcon from "./icons/add";
 import { useDailyLimit } from "../hooks/use-daily-limit";
+import { useBlacklist } from "../hooks/use-blacklist";
 
 export function AddReceiptButton() {
   const { data: limit } = useDailyLimit();
   const router = useRouter();
   const { connection } = useWallet();
+  const inBlacklist = useBlacklist();
 
   const handleClick = () => {
     router.push("/add-receipt");
@@ -33,7 +35,7 @@ export function AddReceiptButton() {
       gap="4px"
       alignItems="center"
       justifyContent="center"
-      disabled={!connection.isConnected || haveNoLimit}
+      disabled={!connection.isConnected || haveNoLimit || inBlacklist.data}
       variant={connection.isConnected ? "primary" : "disabled"}
       size="lg"
       boxShadow="lg"
