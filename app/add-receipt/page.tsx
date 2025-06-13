@@ -1,16 +1,27 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Box, Heading, Button, VStack, useToast } from "@chakra-ui/react";
+import {
+  Box,
+  Heading,
+  Button,
+  VStack,
+  useToast,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+} from "@chakra-ui/react";
 import MobileLayout from "../components/MobileLayout";
 import { useUploadReceipt } from "../hooks/use-upload-receipt";
 import { PhotoCapture } from "../components/PhotoCapture";
 import { S3PhotoProvider, useS3Photo } from "../contexts/S3PhotoContext";
+import { WebCamera } from "../components/WebCamera";
 import imageCompression from "browser-image-compression";
 
 function AddReceiptContent() {
   const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isWebCameraOpen, setIsWebCameraOpen] = useState(false);
   const {
     photoKey,
     photoFile,
@@ -22,7 +33,7 @@ function AddReceiptContent() {
   } = useS3Photo();
   const { mutate: uploadReceipt, isPending } = useUploadReceipt();
 
-  // Handle file selection from camera
+  // Handle file selection from native camera
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -32,46 +43,52 @@ function AddReceiptContent() {
     try {
       // Compress image before processing
       const options = {
-        maxSizeMB: 1, // Max file size in MB
-        maxWidthOrHeight: 1920, // Resize image if larger
-        useWebWorker: true, // Use web worker for better performance
-        fileType: "image/jpeg", // Output format
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
       };
 
-      const compressedBlob = await imageCompression(file, options);
-      console.log("Original size:", file.size / 1024 / 1024, "MB");
-      console.log("Compressed size:", compressedBlob.size / 1024 / 1024, "MB");
+      const compressedFile = await imageCompression(file, options);
 
-      // Create file from compressed blob
-      const compressedFile = new File(
-        [compressedBlob],
-        `photo-${Date.now()}.jpg`,
-        {
-          type: "image/jpeg",
-        }
-      );
+      // Create proper file with name
+      const finalFile = new File([compressedFile], `photo-${Date.now()}.jpg`, {
+        type: "image/jpeg",
+      });
 
-      capturePhoto(compressedFile);
+      capturePhoto(finalFile);
     } catch (error) {
-      console.error("Error processing captured image:", error);
+      console.error("图片处理失败:", error);
       toast({
-        title: "Photo processing failed",
-        description: "Please try again",
+        title: "图片处理失败",
         status: "error",
         duration: 3000,
-        position: "top",
+        isClosable: true,
       });
+    }
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
-  // Open camera
+  // Handle web camera photo capture
+  const handleWebCameraCapture = (file: File) => {
+    capturePhoto(file);
+    setIsWebCameraOpen(false);
+  };
+
   const handleTakePhoto = () => {
     fileInputRef.current?.click();
   };
 
+  const handleWebCameraClick = () => {
+    setIsWebCameraOpen(true);
+  };
+
   // Submit handler
   const handleSubmit = async () => {
-    if (!photoFile && !photoKey) {
+    if (!photoFile && !serverUrl) {
       toast({
         title: "Please take a photo first",
         status: "warning",
@@ -81,8 +98,8 @@ function AddReceiptContent() {
       return;
     }
 
-    // If photoKey exists, photo has already been uploaded, submit directly
-    if (photoKey && serverUrl) {
+    // If serverUrl exists, photo has already been uploaded, submit directly
+    if (serverUrl) {
       uploadReceipt(serverUrl);
       return;
     }
@@ -121,25 +138,42 @@ function AddReceiptContent() {
       <Box
         py={6}
         display="flex"
-        justifyContent="space-between"
+        flexDirection="column"
         gap={3}
         pb={{ base: "env(safe-area-inset-bottom, 16px)", md: 6 }}
       >
+        <Box display="flex" gap={3}>
+          <Button
+            flex={1}
+            minH="54px"
+            borderRadius="20px"
+            colorScheme="primary"
+            variant="outline"
+            borderWidth="2px"
+            size="lg"
+            leftIcon={<span className="fa fa-camera" />}
+            onClick={handleTakePhoto}
+          >
+            Take Photo
+          </Button>
+
+          <Button
+            flex={1}
+            minH="54px"
+            borderRadius="20px"
+            colorScheme="green"
+            variant="outline"
+            borderWidth="2px"
+            size="lg"
+            leftIcon={<span className="fa fa-video" />}
+            onClick={handleWebCameraClick}
+          >
+            Web Camera
+          </Button>
+        </Box>
+
         <Button
-          flex={1}
-          minH="54px"
-          borderRadius="20px"
-          colorScheme="primary"
-          variant="outline"
-          borderWidth="2px"
-          size="lg"
-          leftIcon={<span className="fa fa-camera" />}
-          onClick={handleTakePhoto}
-        >
-          Take Photo
-        </Button>
-        <Button
-          flex={1}
+          w="100%"
           minH="54px"
           borderRadius="20px"
           colorScheme="primary"
@@ -147,7 +181,7 @@ function AddReceiptContent() {
           isLoading={isPending || isUploading}
           loadingText={isUploading ? "Uploading..." : "Submitting..."}
           onClick={handleSubmit}
-          isDisabled={!photoFile && !photoKey}
+          isDisabled={!photoFile && !serverUrl}
         >
           Submit
         </Button>
@@ -162,6 +196,21 @@ function AddReceiptContent() {
         onChange={handleFileChange}
         style={{ display: "none" }}
       />
+
+      {/* Web Camera Modal */}
+      <Modal
+        isOpen={isWebCameraOpen}
+        onClose={() => setIsWebCameraOpen(false)}
+        size="full"
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <WebCamera
+            onPhotoCapture={handleWebCameraCapture}
+            onClose={() => setIsWebCameraOpen(false)}
+          />
+        </ModalContent>
+      </Modal>
     </Box>
   );
 }
