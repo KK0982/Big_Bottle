@@ -57,9 +57,9 @@ function AddReceiptContent() {
 
       capturePhoto(finalFile);
     } catch (error) {
-      console.error("图片处理失败:", error);
+      console.error("Image processing failed:", error);
       toast({
-        title: "图片处理失败",
+        title: "Image processing failed",
         status: "error",
         duration: 3000,
         isClosable: true,

@@ -43,7 +43,7 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
 
       onPhotoCapture(file);
     } catch (error) {
-      console.error("拍照失败:", error);
+      console.error("Photo capture failed:", error);
     } finally {
       setIsCapturing(false);
     }
@@ -72,14 +72,14 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
         zIndex="1"
       >
         <IconButton
-          aria-label="关闭相机"
+          aria-label="Close camera"
           icon={<IoArrowBack />}
           variant="ghost"
           color="white"
           onClick={onClose}
         />
         <Text fontSize="18px" fontWeight="600">
-          网页相机
+          Web Camera
         </Text>
         <Box width="40px" />
       </Flex>
@@ -111,14 +111,14 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
         <Button
           onClick={capture}
           isLoading={isCapturing}
-          loadingText="拍照中..."
+          loadingText="Taking photo..."
           leftIcon={<IoCamera />}
           colorScheme="blue"
           size="lg"
           borderRadius="full"
           px="32px"
         >
-          拍照
+          Take Photo
         </Button>
       </Box>
     </Box>
