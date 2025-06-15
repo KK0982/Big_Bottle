@@ -67,9 +67,10 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
         justify="space-between"
         p="16px"
         color="white"
-        bg="rgba(0,0,0,0.7)"
+        bg="rgba(0,0,0,0.8)"
         position="relative"
-        zIndex="1"
+        zIndex="10001"
+        minHeight="60px"
       >
         <IconButton
           aria-label="Close camera"
@@ -77,6 +78,7 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
           variant="ghost"
           color="white"
           onClick={onClose}
+          size="md"
         />
         <Text fontSize="18px" fontWeight="600">
           Web Camera
@@ -85,7 +87,12 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
       </Flex>
 
       {/* Camera */}
-      <Box flex="1" position="relative">
+      <Box
+        flex="1"
+        position="relative"
+        overflow="hidden"
+        height="calc(100vh - 60px - 100px)"
+      >
         <Webcam
           ref={webcamRef}
           audio={false}
@@ -102,12 +109,27 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
             width: "100%",
             height: "100%",
             objectFit: "cover",
+            position: "absolute",
+            top: 0,
+            left: 0,
           }}
         />
       </Box>
 
-      {/* Controls */}
-      <Box p="24px" bg="rgba(0,0,0,0.7)" display="flex" justifyContent="center">
+      {/* Controls - Fixed at bottom */}
+      <Box
+        position="fixed"
+        bottom="0"
+        left="0"
+        right="0"
+        p="24px"
+        bg="rgba(0,0,0,0.8)"
+        display="flex"
+        justifyContent="center"
+        zIndex="10001"
+        minHeight="100px"
+        alignItems="center"
+      >
         <Button
           onClick={capture}
           isLoading={isCapturing}
@@ -117,6 +139,7 @@ export function WebCamera({ onPhotoCapture, onClose }: WebCameraProps) {
           size="lg"
           borderRadius="full"
           px="32px"
+          py="12px"
         >
           Take Photo
         </Button>
