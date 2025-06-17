@@ -43,7 +43,7 @@ function AddReceiptContent() {
     try {
       // Compress image before processing
       const options = {
-        maxSizeMB: 1,
+        maxSizeMB: 0.2,
         maxWidthOrHeight: 1920,
         useWebWorker: true,
       };
