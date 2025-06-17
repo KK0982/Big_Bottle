@@ -2,6 +2,7 @@
 
 import React, { ReactNode } from "react";
 import Header from "./Header";
+import BottomNav from "./BottomNav";
 import { Box, IconButton } from "@chakra-ui/react";
 import { useRouter, usePathname } from "next/navigation";
 import FA from "react-fontawesome";
@@ -63,10 +64,12 @@ const MobileLayout = ({
         p="24px"
         mt="44px"
         w="full"
-        h="calc(100vh - 44px - var(--safe-area-bottom) - var(--safe-area-top))"
+        h="calc(100vh - 44px - 60px - var(--safe-area-bottom) - var(--safe-area-top))"
+        pb="60px"
       >
         {children}
       </Box>
+      <BottomNav />
     </Box>
   );
 };
