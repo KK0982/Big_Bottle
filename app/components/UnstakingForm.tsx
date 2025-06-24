@@ -9,11 +9,16 @@ import {
   Box,
   Flex,
   Image,
+  Alert,
+  AlertIcon,
+  AlertDescription,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useUserInfo } from "../hooks/use-user-info";
 import { useBalanceQuery } from "../hooks/use-balance-query";
 import { useStakingOperations } from "../hooks/use-staking-operations";
+import { useToastNotifications } from "../hooks/use-toast-notifications";
+import { validateTokenAmount, checkSufficientBalance, tokenBalanceUtils } from "../utils/token-balance";
 
 interface UnstakingFormProps {
   onClose: () => void;
@@ -22,34 +27,72 @@ interface UnstakingFormProps {
 export function UnstakingForm({ onClose }: UnstakingFormProps) {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const { userInfo } = useUserInfo();
   const { balance: stakingBalance } = useBalanceQuery(
-    userInfo.smartAccountAddress || undefined
+    userInfo.stakingWallet || undefined
   );
-  const { unstake, canStake } = useStakingOperations();
+  const { unstake, canStake, isConnected } = useStakingOperations();
+  const { showOperationResult, showLoadingToast } = useToastNotifications();
   const stakedBalance = stakingBalance.b3tr + stakingBalance.vot3;
   const percentageButtons = [25, 50, 75, 100];
 
-  const handlePercentageClick = (percentage: number) => {
-    const calculatedAmount = (stakedBalance * percentage) / 100;
-    setAmount(calculatedAmount.toFixed(2));
-  };
+  // Validate amount in real-time
+  const amountValidation = useMemo(() => {
+    if (!amount) return { isValid: true };
 
-  const handleUnstake = async () => {
-    if (!amount || parseFloat(amount) <= 0 || !canStake) return;
+    const validation = validateTokenAmount(amount);
+    if (!validation.isValid) return validation;
+
+    return checkSufficientBalance(validation.value!, stakedBalance, 'VOT3');
+  }, [amount, stakedBalance]);
+
+  // Update validation error when amount changes
+  const handleAmountChange = useCallback((value: string) => {
+    setAmount(value);
+    setValidationError(null);
+  }, []);
+
+  const handlePercentageClick = useCallback((percentage: number) => {
+    const calculatedAmount = (stakedBalance * percentage) / 100;
+    handleAmountChange(calculatedAmount.toFixed(2));
+  }, [stakedBalance, handleAmountChange]);
+
+  const handleUnstake = useCallback(async () => {
+    // Validate before proceeding
+    if (!amountValidation.isValid) {
+      setValidationError(amountValidation.error || "Invalid amount");
+      return;
+    }
+
+    if (!canStake || !isConnected) {
+      setValidationError("Unable to unstake. Please check your wallet connection.");
+      return;
+    }
 
     setIsLoading(true);
+    setValidationError(null);
+
+    // Show loading toast
+    const loadingToastId = showLoadingToast("unstake");
+
     try {
-      await unstake(amount);
-      onClose();
-      // TODO: 显示成功消息并刷新数据
+      const result = await unstake(amount);
+
+      // Show result
+      showOperationResult(result, amount, "unstake");
+
+      // Close modal on success
+      if (result.success) {
+        onClose();
+      }
     } catch (error) {
-      console.error("取消质押失败:", error);
-      // TODO: 显示错误消息
+      console.error("Unstaking failed:", error);
+      setValidationError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [amount, amountValidation, canStake, isConnected, unstake, showLoadingToast, showOperationResult, onClose]);
 
   return (
     <VStack spacing="1.5rem" align="stretch">
@@ -61,14 +104,14 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
               Amount
             </Text>
             <Text fontSize="0.875rem" color="gray.600">
-              Balance: {stakedBalance.toFixed(2)}
+              Staked: {tokenBalanceUtils.formatForDisplay(stakedBalance)} VOT3
             </Text>
           </Flex>
 
           <Flex align="center" justify="space-between">
             <Input
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0.0"
               fontSize="1.5rem"
               fontWeight="medium"
@@ -77,6 +120,9 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
               p="0"
               _focus={{ boxShadow: "none" }}
               color="gray.600"
+              autoFocus={false}
+              isDisabled={isLoading}
+              isInvalid={!amountValidation.isValid && !!amount}
             />
             <HStack spacing="0.5rem" align="center">
               <Image
@@ -105,6 +151,7 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
                 h="2rem"
                 _hover={{ bg: "rgba(0, 0, 0, 0.1)" }}
                 onClick={() => handlePercentageClick(percentage)}
+                isDisabled={isLoading}
               >
                 {percentage}%
               </Button>
@@ -112,6 +159,26 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
           </HStack>
         </VStack>
       </Box>
+
+      {/* Validation Error */}
+      {(validationError || (!amountValidation.isValid && !!amount)) && (
+        <Alert status="error" borderRadius="0.75rem">
+          <AlertIcon />
+          <AlertDescription fontSize="0.875rem">
+            {validationError || amountValidation.error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Connection Warning */}
+      {!isConnected && (
+        <Alert status="warning" borderRadius="0.75rem">
+          <AlertIcon />
+          <AlertDescription fontSize="0.875rem">
+            Please connect your wallet to unstake tokens.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Unstake Button */}
       <Button
@@ -123,11 +190,18 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
         h="3.375rem"
         _hover={{ bg: "#00C84A" }}
         _disabled={{ bg: "rgba(1, 227, 92, 0.5)", opacity: 1 }}
-        isDisabled={!amount || parseFloat(amount) <= 0 || !canStake}
+        isDisabled={
+          !amount ||
+          !amountValidation.isValid ||
+          !canStake ||
+          !isConnected ||
+          isLoading
+        }
         isLoading={isLoading}
+        loadingText="Processing..."
         onClick={handleUnstake}
       >
-        Unstake
+        {!isConnected ? "Connect Wallet" : "Unstake"}
       </Button>
 
       {/* Footer - 只有 Powered by */}

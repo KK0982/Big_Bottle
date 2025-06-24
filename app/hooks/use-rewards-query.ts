@@ -1,21 +1,17 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useConnex } from "@vechain/dapp-kit-react";
 import { Addresses } from "./consts";
+import { QueryKeys, createQueryOptions, handleQueryError } from "./query-utils";
 
 export function useRewardsQuery(smartAccountAddress?: string) {
   const connex = useConnex();
-  const [rewards, setRewards] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchRewards = async (address: string): Promise<number> => {
     if (!connex || !address) return 0;
 
     try {
-      setError(null);
-
-      // TODO: 实现真实的奖励查询
-      // 这里应该查询 RewardClaimed 事件
+      // TODO: Implement real reward query
+      // This should query RewardClaimed events
       // const events = await fetchAllEvents(
       //   connex.thor
       //     .account(Addresses.Rewarder)
@@ -34,41 +30,44 @@ export function useRewardsQuery(smartAccountAddress?: string) {
       //   sum + BigInt(decoded.reward), 0n);
       // return Number(totalRewards / BigInt(1e18));
 
-      // 暂时返回模拟数据
+      // Return mock data for now
       return 17826;
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to fetch rewards";
-      setError(errorMsg);
       console.error("Error fetching rewards:", err);
-      return 0;
+      throw new Error(errorMsg);
     }
   };
 
-  const refetch = async () => {
-    if (!smartAccountAddress) return;
-
-    setLoading(true);
-    try {
-      const rewardAmount = await fetchRewards(smartAccountAddress);
-      setRewards(rewardAmount);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (smartAccountAddress) {
-      refetch();
-    } else {
-      setRewards(0);
-    }
-  }, [smartAccountAddress, connex]);
+  const {
+    data: rewards = 0,
+    isLoading: loading,
+    error,
+    refetch,
+    isStale,
+    dataUpdatedAt,
+  } = useQuery({
+    ...createQueryOptions<number>("REWARDS"),
+    queryKey: QueryKeys.rewards(smartAccountAddress, Addresses.RewardPool),
+    queryFn: () => fetchRewards(smartAccountAddress!),
+    enabled: !!smartAccountAddress && !!connex,
+    // Rewards update less frequently, so we can be more conservative
+    refetchInterval: 2 * 60 * 1000, // 2 minutes
+    refetchIntervalInBackground: false,
+  });
 
   return {
     rewards,
     loading,
-    error,
+    error: error ? handleQueryError(error) : null,
     refetch,
+    isStale,
+    lastUpdated: dataUpdatedAt,
+    // Helper for display
+    formattedRewards: rewards.toLocaleString("en-US", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }),
   };
 }

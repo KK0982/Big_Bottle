@@ -9,11 +9,16 @@ import {
   Box,
   Flex,
   Image,
+  Alert,
+  AlertIcon,
+  AlertDescription,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { useUserInfo } from "../hooks/use-user-info";
 import { useBalanceQuery } from "../hooks/use-balance-query";
 import { useStakingOperations } from "../hooks/use-staking-operations";
+import { useToastNotifications } from "../hooks/use-toast-notifications";
+import { validateTokenAmount, checkSufficientBalance, tokenBalanceUtils } from "../utils/token-balance";
 
 interface StakingFormProps {
   onClose: () => void;
@@ -22,34 +27,84 @@ interface StakingFormProps {
 export function StakingForm({ onClose }: StakingFormProps) {
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { userInfo } = useUserInfo();
   const { balance: accountBalance } = useBalanceQuery(
     userInfo.account || undefined
   );
-  const { stake, canStake } = useStakingOperations();
-  const balance = accountBalance.availableB3tr;
+  const { stake, canStake, isConnected } = useStakingOperations();
+  const { showOperationResult, showLoadingToast } = useToastNotifications();
+  const balance = accountBalance.b3tr;
   const percentageButtons = [25, 50, 75, 100];
 
-  const handlePercentageClick = (percentage: number) => {
-    const calculatedAmount = (balance * percentage) / 100;
-    setAmount(calculatedAmount.toFixed(2));
-  };
+  // Validate amount in real-time
+  const amountValidation = useMemo(() => {
+    if (!amount) return { isValid: true };
 
-  const handleStake = async () => {
-    if (!amount || parseFloat(amount) <= 0 || !canStake) return;
+    const validation = validateTokenAmount(amount);
+    if (!validation.isValid) return validation;
+
+    return checkSufficientBalance(validation.value!, balance, 'B3TR');
+  }, [amount, balance]);
+
+  // Update validation error when amount changes
+  const handleAmountChange = useCallback((value: string) => {
+    setAmount(value);
+    setValidationError(null);
+  }, []);
+
+  const handlePercentageClick = useCallback((percentage: number) => {
+    const calculatedAmount = (balance * percentage) / 100;
+    handleAmountChange(calculatedAmount.toFixed(2));
+  }, [balance, handleAmountChange]);
+
+  const handleStake = useCallback(async () => {
+    // Validate before proceeding
+    if (!amountValidation.isValid) {
+      setValidationError(amountValidation.error || "Invalid amount");
+      return;
+    }
+
+    if (!canStake || !isConnected) {
+      setValidationError("Unable to stake. Please check your wallet connection.");
+      return;
+    }
+
+    // Blur the input to remove focus before opening VeChain dialog
+    if (inputRef.current) {
+      inputRef.current.blur();
+    }
 
     setIsLoading(true);
+    setValidationError(null);
+
+    // Show loading toast
+    const loadingToastId = showLoadingToast("stake");
+
     try {
-      await stake(amount);
-      onClose();
-      // TODO: 显示成功消息并刷新数据
+      const result = await stake(amount);
+
+      // Close loading toast
+      if (loadingToastId) {
+        // Note: In a real implementation, you'd want to close the specific toast
+        // For now, we'll rely on the result toast to provide feedback
+      }
+
+      // Show result
+      showOperationResult(result, amount, "stake");
+
+      // Close modal on success
+      if (result.success) {
+        onClose();
+      }
     } catch (error) {
-      console.error("质押失败:", error);
-      // TODO: 显示错误消息
+      console.error("Staking failed:", error);
+      setValidationError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [amount, amountValidation, canStake, isConnected, stake, showLoadingToast, showOperationResult, onClose]);
 
   return (
     <VStack spacing="1.5rem" align="stretch">
@@ -61,14 +116,15 @@ export function StakingForm({ onClose }: StakingFormProps) {
               Amount
             </Text>
             <Text fontSize="0.875rem" color="gray.600">
-              Balance: {balance.toFixed(2)}
+              Balance: {tokenBalanceUtils.formatForDisplay(balance)} B3TR
             </Text>
           </Flex>
 
           <Flex align="center" justify="space-between">
             <Input
+              ref={inputRef}
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0.0"
               fontSize="1.5rem"
               fontWeight="medium"
@@ -77,6 +133,9 @@ export function StakingForm({ onClose }: StakingFormProps) {
               p="0"
               _focus={{ boxShadow: "none" }}
               color="gray.600"
+              autoFocus={false}
+              isDisabled={isLoading}
+              isInvalid={!amountValidation.isValid && !!amount}
             />
             <HStack spacing="0.5rem" align="center">
               <Image
@@ -105,6 +164,7 @@ export function StakingForm({ onClose }: StakingFormProps) {
                 h="2rem"
                 _hover={{ bg: "rgba(0, 0, 0, 0.1)" }}
                 onClick={() => handlePercentageClick(percentage)}
+                isDisabled={isLoading}
               >
                 {percentage}%
               </Button>
@@ -112,6 +172,26 @@ export function StakingForm({ onClose }: StakingFormProps) {
           </HStack>
         </VStack>
       </Box>
+
+      {/* Validation Error */}
+      {(validationError || (!amountValidation.isValid && !!amount)) && (
+        <Alert status="error" borderRadius="0.75rem">
+          <AlertIcon />
+          <AlertDescription fontSize="0.875rem">
+            {validationError || amountValidation.error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Connection Warning */}
+      {!isConnected && (
+        <Alert status="warning" borderRadius="0.75rem">
+          <AlertIcon />
+          <AlertDescription fontSize="0.875rem">
+            Please connect your wallet to stake tokens.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Stake Button */}
       <Button
@@ -123,11 +203,18 @@ export function StakingForm({ onClose }: StakingFormProps) {
         h="3.375rem"
         _hover={{ bg: "#00C84A" }}
         _disabled={{ bg: "rgba(1, 227, 92, 0.5)", opacity: 1 }}
-        isDisabled={!amount || parseFloat(amount) <= 0 || !canStake}
+        isDisabled={
+          !amount ||
+          !amountValidation.isValid ||
+          !canStake ||
+          !isConnected ||
+          isLoading
+        }
         isLoading={isLoading}
+        loadingText="Processing..."
         onClick={handleStake}
       >
-        Stake
+        {!isConnected ? "Connect Wallet" : "Stake"}
       </Button>
 
       {/* Warning Text */}
@@ -140,7 +227,7 @@ export function StakingForm({ onClose }: StakingFormProps) {
         >
           When staking, you{" "}
           <Text as="span" fontWeight="semibold">
-            won't be able to manually vote
+            won&apos;t be able to manually vote
           </Text>{" "}
           on VeBetterDAO as the staking wallet will do it for you.
         </Text>

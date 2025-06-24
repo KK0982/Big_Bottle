@@ -1,32 +1,22 @@
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useConnex, useWallet } from "@vechain/dapp-kit-react";
 import { Addresses, APP_CONFIG } from "./consts";
-
-export interface UserInfo {
-  account: string | null;
-  tokenId: string;
-  smartAccountAddress: string;
-  hasPool: boolean;
-  passportAddress: string;
-}
+import { QueryKeys, createQueryOptions, handleQueryError } from "./query-utils";
+import type { UserInfo } from "../types";
 
 const getEmptyUserInfo = (): UserInfo => ({
   account: null,
-  tokenId: "",
-  smartAccountAddress: "",
+  stakingTokenId: "",
+  stakingWallet: "",
   hasPool: false,
-  passportAddress: "",
+  passportAddress: undefined,
 });
 
 export function useUserInfo() {
   const { account } = useWallet();
   const connex = useConnex();
 
-  const [userInfo, setUserInfo] = useState<UserInfo>(getEmptyUserInfo());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // 获取用户的 tokenId
+  // Get user's stakingTokenId
   const fetchTokenId = async (userAccount: string): Promise<string> => {
     if (!connex) return "";
 
@@ -48,14 +38,16 @@ export function useUserInfo() {
       }
       throw new Error("No token found");
     } catch {
-      // 如果没有 token，使用 account 生成一个
+      // If no token exists, generate one using account
       return BigInt(userAccount).toString();
     }
   };
 
-  // 获取智能账户地址
-  const fetchSmartAccountAddress = async (tokenId: string): Promise<string> => {
-    if (!connex || !tokenId) return "";
+  // Get staking wallet address
+  const fetchSmartAccountAddress = async (
+    stakingTokenId: string
+  ): Promise<string> => {
+    if (!connex || !stakingTokenId) return "";
 
     try {
       const result = await connex.thor
@@ -65,22 +57,23 @@ export function useUserInfo() {
           name: "getPoolAddress",
           outputs: [{ name: "tbaAddress", type: "address" }],
         })
-        .call(tokenId);
+        .call(stakingTokenId);
 
       return result.decoded.tbaAddress;
     } catch (err) {
-      console.error("Error getting smart account address:", err);
+      console.error("Error getting staking wallet address:", err);
       return "";
     }
   };
 
-  // 获取 Passport 委托地址
-  const fetchPassportAddress = async (
-    smartAccount: string
-  ): Promise<string> => {
-    if (!connex || !smartAccount) return "";
+  // Check who has delegated their passport to the staking wallet
+  const fetchPassportDelegation = async (
+    stakingWallet: string
+  ): Promise<string | undefined> => {
+    if (!connex || !stakingWallet) return undefined;
 
     try {
+      // Check who has delegated their passport to this staking wallet (official method)
       const result = await connex.thor
         .account(Addresses.VePassport)
         .method({
@@ -88,74 +81,87 @@ export function useUserInfo() {
           name: "getDelegator",
           outputs: [{ name: "user", type: "address" }],
         })
-        .call(smartAccount);
+        .call(stakingWallet);
 
-      return result.decoded.user;
+      const user = result.decoded.user;
+
+      // Return undefined if it's zero address or empty
+      if (!user || user === "0x0000000000000000000000000000000000000000") {
+        return undefined;
+      }
+
+      return user;
     } catch (err) {
-      console.error("Error getting passport address:", err);
-      return "";
+      console.error("Error getting passport delegation:", err);
+      return undefined;
     }
   };
 
-  // 检查是否有 Pool
-  const checkHasPool = async (smartAccount: string): Promise<boolean> => {
-    if (!connex || !smartAccount) return false;
+  // Check if pool exists
+  const checkHasPool = async (stakingWallet: string): Promise<boolean> => {
+    if (!connex || !stakingWallet) return false;
 
     try {
-      const { hasCode } = await connex.thor.account(smartAccount).get();
+      const { hasCode } = await connex.thor.account(stakingWallet).get();
       return hasCode;
     } catch {
       return false;
     }
   };
 
-  const fetchUserInfo = async () => {
+  const fetchUserInfo = async (): Promise<UserInfo> => {
     if (!account || !connex) {
-      setUserInfo(getEmptyUserInfo());
-      return;
+      return getEmptyUserInfo();
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
-      // 1. 获取 tokenId
-      const tokenId = await fetchTokenId(account);
+      // 1. Get stakingTokenId
+      const stakingTokenId = await fetchTokenId(account);
 
-      // 2. 获取智能账户地址
-      const smartAccountAddress = await fetchSmartAccountAddress(tokenId);
+      // 2. Get staking wallet address
+      const stakingWallet = await fetchSmartAccountAddress(stakingTokenId);
 
-      // 3. 并行获取其他信息
-      const [hasPool, passportAddress] = await Promise.all([
-        checkHasPool(smartAccountAddress),
-        fetchPassportAddress(smartAccountAddress),
+      // 3. Get other info in parallel
+      const [hasPool, passportDelegatedTo] = await Promise.all([
+        checkHasPool(stakingWallet),
+        fetchPassportDelegation(stakingWallet),
       ]);
 
-      setUserInfo({
+      return {
         account,
-        tokenId,
-        smartAccountAddress,
+        stakingTokenId,
+        stakingWallet,
         hasPool,
-        passportAddress,
-      });
+        passportAddress: passportDelegatedTo,
+      };
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to fetch user info";
-      setError(errorMsg);
       console.error("Error fetching user info:", err);
-    } finally {
-      setLoading(false);
+      throw new Error(errorMsg);
     }
   };
 
-  useEffect(() => {
-    fetchUserInfo();
-  }, [account, connex]);
+  const {
+    data: userInfo = getEmptyUserInfo(),
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    ...createQueryOptions<UserInfo>("USER_INFO"),
+    queryKey: QueryKeys.userInfo(
+      account || undefined,
+      { VeDelegate: Addresses.VeDelegate, VePassport: Addresses.VePassport },
+      APP_CONFIG.APP_ID
+    ),
+    queryFn: fetchUserInfo,
+    enabled: !!account && !!connex,
+  });
 
   return {
     userInfo,
     loading,
-    error,
-    refetch: fetchUserInfo,
+    error: error ? handleQueryError(error) : null,
+    refetch,
   };
 }

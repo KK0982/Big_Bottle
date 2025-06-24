@@ -2,12 +2,14 @@ import { useMemo } from "react";
 import { useUserInfo } from "./use-user-info";
 import { useBalanceQuery } from "./use-balance-query";
 import { useRewardsQuery } from "./use-rewards-query";
+import { tokenBalanceUtils } from "../utils/token-balance";
 
 export interface StakingData {
   apy: string;
   stakedBalance: string;
   availableToStake: string;
   youEarned: string;
+  poolExists: boolean;
 }
 
 export function useStakingData() {
@@ -20,11 +22,11 @@ export function useStakingData() {
 
   // Get smart account balance (staked balance)
   const { balance: stakingBalance, loading: stakingBalanceLoading } =
-    useBalanceQuery(userInfo.smartAccountAddress || undefined);
+    useBalanceQuery(userInfo.stakingWallet || undefined);
 
   // Get rewards
   const { rewards, loading: rewardsLoading } = useRewardsQuery(
-    userInfo.smartAccountAddress || undefined
+    userInfo.stakingWallet || undefined
   );
 
   const loading =
@@ -36,38 +38,26 @@ export function useStakingData() {
   const data: StakingData | null = useMemo(() => {
     if (loading) return null;
 
-    // Calculate APY (using mock value for now)
+    // Calculate APY (placeholder)
     const apy = "~113.08%";
 
-    // Format staked balance (total balance in smart account)
-    const stakedTotal = stakingBalance.b3tr + stakingBalance.vot3;
-    const stakedBalance = `${stakedTotal.toLocaleString("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })} B3TR`;
+    // Format staked balance - use VOT3 from smart contract
+    const stakedBalance = `${tokenBalanceUtils.formatForDisplay(stakingBalance.vot3)} VOT3`;
 
     // Format available to stake balance (available B3TR in user account)
-    const availableToStake = `${accountBalance.availableB3tr.toLocaleString(
-      "en-US",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    )} B3TR`;
+    const availableToStake = `${tokenBalanceUtils.formatForDisplay(accountBalance.b3tr)} B3TR`;
 
     // Format earned rewards
-    const youEarned = `${rewards.toLocaleString("en-US", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })} B3TR`;
+    const youEarned = `${tokenBalanceUtils.formatForDisplay(rewards, 0)} B3TR`;
 
     return {
       apy,
       stakedBalance,
       availableToStake,
       youEarned,
+      poolExists: userInfo.hasPool,
     };
-  }, [accountBalance, stakingBalance, rewards, loading]);
+  }, [accountBalance, stakingBalance, rewards, userInfo.hasPool, loading]);
 
   return { data, loading };
 }

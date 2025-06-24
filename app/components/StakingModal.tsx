@@ -12,7 +12,7 @@ import {
   Text,
   Button,
 } from "@chakra-ui/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { StakingForm } from "./StakingForm";
 import { UnstakingForm } from "./UnstakingForm";
 
@@ -23,11 +23,20 @@ interface StakingModalProps {
 
 export function StakingModal({ isOpen, onClose }: StakingModalProps) {
   const [activeTab, setActiveTab] = useState<"stake" | "unstake">("stake");
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  // Reset tab when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab("stake");
+    }
+  }, [isOpen]);
 
   return (
     <Drawer isOpen={isOpen} placement="bottom" onClose={onClose}>
       <DrawerOverlay />
       <DrawerContent
+        ref={modalRef}
         borderTopRadius="1.5rem"
         borderBottomRadius="0"
         maxH="80vh"
@@ -82,11 +91,10 @@ export function StakingModal({ isOpen, onClose }: StakingModalProps) {
             </HStack>
 
             {/* Form Content */}
-            {activeTab === "stake" ? (
-              <StakingForm onClose={onClose} />
-            ) : (
-              <UnstakingForm onClose={onClose} />
-            )}
+            <VStack spacing="1.5rem" align="stretch">
+              {activeTab === "stake" && <StakingForm onClose={onClose} />}
+              {activeTab === "unstake" && <UnstakingForm onClose={onClose} />}
+            </VStack>
           </VStack>
         </DrawerBody>
       </DrawerContent>

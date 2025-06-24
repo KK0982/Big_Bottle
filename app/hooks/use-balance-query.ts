@@ -1,33 +1,17 @@
-import { useState, useEffect } from "react";
-import { useConnex, useWallet } from "@vechain/dapp-kit-react";
+import { useQuery } from "@tanstack/react-query";
+import { useConnex } from "@vechain/dapp-kit-react";
 import { Addresses } from "./consts";
-
-export interface TokenBalance {
-  b3tr: number;
-  vot3: number;
-  availableB3tr: number;
-  availableVot3: number;
-}
-
-const getEmptyBalance = (): TokenBalance => ({
-  b3tr: 0,
-  vot3: 0,
-  availableB3tr: 0,
-  availableVot3: 0,
-});
+import { QueryKeys, createQueryOptions, handleQueryError } from "./query-utils";
+import type { TokenBalance, TokenBalanceRaw } from "../types";
+import { tokenBalanceUtils, createEmptyBalance } from "../utils/token-balance";
 
 export function useBalanceQuery(address?: string) {
   const connex = useConnex();
-  const [balance, setBalance] = useState<TokenBalance>(getEmptyBalance());
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchBalance = async (targetAddress: string): Promise<TokenBalance> => {
-    if (!connex || !targetAddress) return getEmptyBalance();
+    if (!connex || !targetAddress) return createEmptyBalance();
 
     try {
-      setError(null);
-
       const [b3trResult, vot3Result] = await Promise.all([
         connex.thor
           .account(Addresses.B3TR)
@@ -47,52 +31,52 @@ export function useBalanceQuery(address?: string) {
           .call(targetAddress),
       ]);
 
-      const b3trBalance = Number(
-        BigInt(b3trResult.decoded.balance) / BigInt(1e18)
-      );
-      const vot3Balance = Number(
-        BigInt(vot3Result.decoded.balance) / BigInt(1e18)
-      );
-
-      return {
-        b3tr: b3trBalance,
-        vot3: vot3Balance,
-        availableB3tr: b3trBalance,
-        availableVot3: vot3Balance,
+      // Create raw balance first
+      const rawBalance: TokenBalanceRaw = {
+        b3tr: BigInt(b3trResult.decoded.balance),
+        vot3: BigInt(vot3Result.decoded.balance),
       };
+
+      // Convert to display format
+      return tokenBalanceUtils.formatBalance(rawBalance);
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "Failed to fetch balance";
-      setError(errorMsg);
       console.error("Error fetching balance:", err);
-      return getEmptyBalance();
+      throw new Error(errorMsg);
     }
   };
 
-  const refetch = async () => {
-    if (!address) return;
-
-    setLoading(true);
-    try {
-      const newBalance = await fetchBalance(address);
-      setBalance(newBalance);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (address) {
-      refetch();
-    } else {
-      setBalance(getEmptyBalance());
-    }
-  }, [address, connex]);
+  const {
+    data: balance = createEmptyBalance(),
+    isLoading: loading,
+    error,
+    refetch,
+    isStale,
+    dataUpdatedAt,
+  } = useQuery({
+    ...createQueryOptions<TokenBalance>("BALANCE"),
+    queryKey: QueryKeys.balance(address, {
+      B3TR: Addresses.B3TR,
+      VOT3: Addresses.VOT3,
+    }),
+    queryFn: () => fetchBalance(address!),
+    enabled: !!address && !!connex,
+    // Optimize for staking operations - more frequent updates for active staking
+    refetchInterval: 30000, // 30 seconds base interval
+    refetchIntervalInBackground: false,
+  });
 
   return {
     balance,
     loading,
-    error,
+    error: error ? handleQueryError(error) : null,
     refetch,
+    isStale,
+    lastUpdated: dataUpdatedAt,
+    // Helper methods for staking operations
+    hasB3TR: balance.b3tr > 0,
+    hasVOT3: balance.vot3 > 0,
+    totalValue: balance.b3tr + balance.vot3,
   };
 }
