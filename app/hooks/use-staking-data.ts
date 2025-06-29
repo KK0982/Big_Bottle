@@ -41,8 +41,9 @@ export function useStakingData() {
     // Calculate APY (placeholder)
     const apy = "~113.08%";
 
-    // Format staked balance - use VOT3 from smart contract
-    const stakedBalance = `${tokenBalanceUtils.formatForDisplay(stakingBalance.vot3)} VOT3`;
+    // Format staked balance - show total as B3TR equivalent
+    const totalStakedAmount = stakingBalance.b3tr + stakingBalance.vot3;
+    const stakedBalance = `${tokenBalanceUtils.formatForDisplay(totalStakedAmount)} B3TR`;
 
     // Format available to stake balance (available B3TR in user account)
     const availableToStake = `${tokenBalanceUtils.formatForDisplay(accountBalance.b3tr)} B3TR`;

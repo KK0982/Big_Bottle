@@ -54,7 +54,8 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
   }, []);
 
   const handlePercentageClick = useCallback((percentage: number) => {
-    const calculatedAmount = (stakedBalance * percentage) / 100;
+    const numericBalance = typeof stakedBalance === 'bigint' ? Number(stakedBalance) / 1e18 : stakedBalance;
+    const calculatedAmount = (numericBalance * percentage) / 100;
     handleAmountChange(calculatedAmount.toFixed(2));
   }, [stakedBalance, handleAmountChange]);
 
@@ -104,7 +105,7 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
               Amount
             </Text>
             <Text fontSize="0.875rem" color="gray.600">
-              Staked: {tokenBalanceUtils.formatForDisplay(stakedBalance)} VOT3
+              Staked: {tokenBalanceUtils.formatForDisplay(stakedBalance)} B3TR
             </Text>
           </Flex>
 
@@ -201,7 +202,7 @@ export function UnstakingForm({ onClose }: UnstakingFormProps) {
         loadingText="Processing..."
         onClick={handleUnstake}
       >
-        {!isConnected ? "Connect Wallet" : "Unstake"}
+        {!isConnected ? "Connect Wallet" : "Unstake to B3TR"}
       </Button>
 
       {/* Footer - 只有 Powered by */}

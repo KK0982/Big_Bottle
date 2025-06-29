@@ -364,6 +364,30 @@ export function useStakingOperations() {
         );
       }
 
+      // 5. Set app voting weight to 100%
+      clauses.push(
+        await executeOnSmartAccount(
+          Addresses.VeBetterDAO,
+          "0",
+          connex.thor
+            .account(Addresses.VeBetterDAO)
+            .method({
+              inputs: [
+                { name: "appId", type: "bytes32" },
+                { name: "percentage", type: "uint256" }
+              ],
+              name: "setAppVotingWeight",
+              outputs: [],
+            })
+            .asClause(
+              APP_CONFIG.APP_ID, // APP_ID is already in bytes32 format
+              "100" // 100% weight
+            ).data,
+          0,
+          signingCallback
+        )
+      );
+
       return clauses;
     },
     [connex, account, userInfo, executeOnSmartAccount]
@@ -641,10 +665,10 @@ export function useStakingOperations() {
         // Record operation for rate limiting
         rateLimiter.recordOperation(account!);
 
-        // Build transaction clauses
+        // Build transaction clauses - 直接兑换为 B3TR
         const clauses = await buildWithdrawClauses({
-          b3tr: BigInt(0),
-          vot3: withdrawAmount,
+          b3tr: withdrawAmount,  // 兑换为 B3TR
+          vot3: BigInt(0),       // 不直接提取 VOT3
           recipient: account!,
         });
 

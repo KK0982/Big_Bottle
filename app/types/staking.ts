@@ -41,15 +41,18 @@ export interface TokenBalanceRaw {
 
 // Token balance information (formatted for display)
 export interface TokenBalance {
-  b3tr: number;
-  vot3: number;
+  b3tr: bigint,
+  vot3: bigint,
+  convertedB3tr: bigint,
+  availableB3tr: bigint,
+  availableVot3: bigint,
 }
 
 // Token balance utilities
 export interface TokenBalanceUtils {
   formatBalance: (balance: TokenBalanceRaw) => TokenBalance;
   parseBalance: (balance: TokenBalance) => TokenBalanceRaw;
-  formatForDisplay: (amount: number, decimals?: number) => string;
+  formatForDisplay: (amount: number | bigint, decimals?: number) => string;
 }
 
 // User information interface
@@ -169,23 +172,19 @@ export interface AppConfig {
   APP_NAME: string;
 }
 
-// Contract addresses
+// Contract addresses - 简化版本，只保留实际使用的合约
 export interface ContractAddresses {
+  // 核心 staking 合约
   VeDelegate: string;
   B3TR: string;
   VOT3: string;
   VePassport: string;
-  VeBetterPassport: string;
+
+  // 投票和治理合约
   VeBetterDAO: string;
-  XAllocationVoting: string;
-  Treasury: string;
-  Emissions: string;
-  GovernorContract: string;
-  TimelockController: string;
-  VotingEscrow: string;
+
+  // 奖励合约
   RewardPool: string;
-  XAllocationPool: string;
-  QuadraticFunding: string;
 }
 
 // Query configuration

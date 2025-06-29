@@ -43,7 +43,7 @@ export function useToastNotifications() {
     (txid: string, amount: string) => {
       showToast({
         title: "Unstaking Successful!",
-        description: `Successfully unstaked ${amount} VOT3. Transaction: ${txid.slice(0, 10)}...`,
+        description: `Successfully unstaked ${amount} B3TR. Transaction: ${txid.slice(0, 10)}...`,
         status: "success",
         duration: 7000,
       });
@@ -60,10 +60,14 @@ export function useToastNotifications() {
       switch (error.code) {
         case "NO_ACCOUNT":
           title = "Wallet Not Connected";
-          description = "Please connect your wallet to continue staking.";
+          description = "Please connect your wallet to continue.";
           break;
         case "INSUFFICIENT_BALANCE":
           title = "Insufficient Balance";
+          break;
+        case "INSUFFICIENT_STAKED_BALANCE":
+          title = "Insufficient Staked Balance";
+          description = "You don't have enough staked B3TR to unstake this amount.";
           break;
         case "INVALID_AMOUNT":
           title = "Invalid Amount";

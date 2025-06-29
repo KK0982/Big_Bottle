@@ -104,35 +104,57 @@ export class QueryCacheManager {
     operation: 'stake' | 'unstake',
     amount: number
   ) {
-    // Update user balance (decrease B3TR for stake, increase for unstake)
-    this.queryClient.setQueryData(
-      QueryKeys.balance(userAddress),
-      (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        return {
-          ...oldData,
-          b3tr: operation === 'stake' 
-            ? Math.max(0, oldData.b3tr - amount)
-            : oldData.b3tr + amount,
-        };
-      }
-    );
+    if (operation === 'stake') {
+      // Staking: 用户 B3TR 减少
+      this.queryClient.setQueryData(
+        QueryKeys.balance(userAddress),
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            b3tr: oldData.b3tr - BigInt(Math.floor(amount * 1e18)),
+          };
+        }
+      );
 
-    // Update smart account balance (increase VOT3 for stake, decrease for unstake)
-    this.queryClient.setQueryData(
-      QueryKeys.balance(smartAccountAddress),
-      (oldData: any) => {
-        if (!oldData) return oldData;
-        
-        return {
-          ...oldData,
-          vot3: operation === 'stake'
-            ? oldData.vot3 + amount
-            : Math.max(0, oldData.vot3 - amount),
-        };
-      }
-    );
+      // Staking: Smart Account VOT3 增加
+      this.queryClient.setQueryData(
+        QueryKeys.balance(smartAccountAddress),
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            vot3: oldData.vot3 + BigInt(Math.floor(amount * 1e18)),
+          };
+        }
+      );
+    } else {
+      // Unstaking: 用户 B3TR 增加 (直接兑换为 B3TR)
+      this.queryClient.setQueryData(
+        QueryKeys.balance(userAddress),
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            b3tr: oldData.b3tr + BigInt(Math.floor(amount * 1e18)),
+          };
+        }
+      );
+
+      // Unstaking: Smart Account VOT3 减少
+      this.queryClient.setQueryData(
+        QueryKeys.balance(smartAccountAddress),
+        (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            vot3: oldData.vot3 > BigInt(Math.floor(amount * 1e18))
+              ? oldData.vot3 - BigInt(Math.floor(amount * 1e18))
+              : BigInt(0),
+          };
+        }
+      );
+    }
   }
 
   /**

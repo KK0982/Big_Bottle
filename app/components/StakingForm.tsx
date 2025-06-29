@@ -55,7 +55,8 @@ export function StakingForm({ onClose }: StakingFormProps) {
   }, []);
 
   const handlePercentageClick = useCallback((percentage: number) => {
-    const calculatedAmount = (balance * percentage) / 100;
+    const numericBalance = typeof balance === 'bigint' ? Number(balance) / 1e18 : balance;
+    const calculatedAmount = (numericBalance * percentage) / 100;
     handleAmountChange(calculatedAmount.toFixed(2));
   }, [balance, handleAmountChange]);
 
