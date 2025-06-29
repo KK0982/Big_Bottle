@@ -1,14 +1,11 @@
 import { useMemo } from "react";
 import { useUserInfo } from "./use-user-info";
 import { useBalanceQuery } from "./use-balance-query";
-import { useRewardsQuery } from "./use-rewards-query";
-import { tokenBalanceUtils } from "../utils/token-balance";
+import { B3TR } from "../utils/token-balance";
 
 export interface StakingData {
-  apy: string;
   stakedBalance: string;
   availableToStake: string;
-  youEarned: string;
   poolExists: boolean;
 }
 
@@ -22,43 +19,29 @@ export function useStakingData() {
 
   // Get smart account balance (staked balance)
   const { balance: stakingBalance, loading: stakingBalanceLoading } =
-    useBalanceQuery(userInfo.stakingWallet || undefined);
-
-  // Get rewards
-  const { rewards, loading: rewardsLoading } = useRewardsQuery(
-    userInfo.stakingWallet || undefined
-  );
+    useBalanceQuery(userInfo.smartAccountAddress || undefined);
 
   const loading =
     userLoading ||
     accountBalanceLoading ||
-    stakingBalanceLoading ||
-    rewardsLoading;
+    stakingBalanceLoading;
 
   const data: StakingData | null = useMemo(() => {
     if (loading) return null;
 
-    // Calculate APY (placeholder)
-    const apy = "~113.08%";
-
     // Format staked balance - show total as B3TR equivalent
     const totalStakedAmount = stakingBalance.b3tr + stakingBalance.vot3;
-    const stakedBalance = `${tokenBalanceUtils.formatForDisplay(totalStakedAmount)} B3TR`;
+    const stakedBalance = B3TR.formatWithSymbol(totalStakedAmount);
 
     // Format available to stake balance (available B3TR in user account)
-    const availableToStake = `${tokenBalanceUtils.formatForDisplay(accountBalance.b3tr)} B3TR`;
-
-    // Format earned rewards
-    const youEarned = `${tokenBalanceUtils.formatForDisplay(rewards, 0)} B3TR`;
+    const availableToStake = B3TR.formatWithSymbol(accountBalance.b3tr);
 
     return {
-      apy,
       stakedBalance,
       availableToStake,
-      youEarned,
       poolExists: userInfo.hasPool,
     };
-  }, [accountBalance, stakingBalance, rewards, userInfo.hasPool, loading]);
+  }, [accountBalance, stakingBalance, userInfo.hasPool, loading]);
 
   return { data, loading };
 }

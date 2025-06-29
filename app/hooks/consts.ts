@@ -17,9 +17,6 @@ export const Addresses: ContractAddresses = {
 
   // 投票和治理合约
   VeBetterDAO: "0x89A00Bb0947a30FF95BEeF77a66AEdE3842Fe5B7",
-
-  // 奖励合约
-  RewardPool: "0x838A33AF756a6366f93e201423E1425f67eC0Fa7",
 };
 
 // BigBottle application unique identifier in VeBetterDAO ecosystem
@@ -27,3 +24,5 @@ export const APP_CONFIG: AppConfig = {
   APP_ID: "0x68c854d0aef9f5517d58d4772395d0ab44d914070fa6ca5a96f2146ca1449248",
   APP_NAME: "BigBottle",
 };
+
+export const GRAPH_URL = "https://graph.vet/subgraphs/name/vebetter/dao";

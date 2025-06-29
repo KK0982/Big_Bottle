@@ -6,8 +6,9 @@ import type { UserInfo } from "../types";
 
 const getEmptyUserInfo = (): UserInfo => ({
   account: null,
-  stakingTokenId: "",
-  stakingWallet: "",
+  tokenId: "",
+  smartAccountAddress: "",
+  stakingTokenId: "", // 兼容性别名
   hasPool: false,
   passportAddress: undefined,
 });
@@ -16,7 +17,7 @@ export function useUserInfo() {
   const { account } = useWallet();
   const connex = useConnex();
 
-  // Get user's stakingTokenId
+  // Get user's tokenId
   const fetchTokenId = async (userAccount: string): Promise<string> => {
     if (!connex) return "";
 
@@ -43,11 +44,9 @@ export function useUserInfo() {
     }
   };
 
-  // Get staking wallet address
-  const fetchSmartAccountAddress = async (
-    stakingTokenId: string
-  ): Promise<string> => {
-    if (!connex || !stakingTokenId) return "";
+  // Get smart account address
+  const fetchSmartAccountAddress = async (tokenId: string): Promise<string> => {
+    if (!connex || !tokenId) return "";
 
     try {
       const result = await connex.thor
@@ -57,23 +56,23 @@ export function useUserInfo() {
           name: "getPoolAddress",
           outputs: [{ name: "tbaAddress", type: "address" }],
         })
-        .call(stakingTokenId);
+        .call(tokenId);
 
       return result.decoded.tbaAddress;
     } catch (err) {
-      console.error("Error getting staking wallet address:", err);
+      console.error("Error getting smart account address:", err);
       return "";
     }
   };
 
-  // Check who has delegated their passport to the staking wallet
+  // Check who has delegated their passport to the smart account
   const fetchPassportDelegation = async (
-    stakingWallet: string
+    smartAccount: string
   ): Promise<string | undefined> => {
-    if (!connex || !stakingWallet) return undefined;
+    if (!connex || !smartAccount) return undefined;
 
     try {
-      // Check who has delegated their passport to this staking wallet (official method)
+      // Check who has delegated their passport to this smart account (official method)
       const result = await connex.thor
         .account(Addresses.VePassport)
         .method({
@@ -81,7 +80,7 @@ export function useUserInfo() {
           name: "getDelegator",
           outputs: [{ name: "user", type: "address" }],
         })
-        .call(stakingWallet);
+        .call(smartAccount);
 
       const user = result.decoded.user;
 
@@ -98,11 +97,11 @@ export function useUserInfo() {
   };
 
   // Check if pool exists
-  const checkHasPool = async (stakingWallet: string): Promise<boolean> => {
-    if (!connex || !stakingWallet) return false;
+  const checkHasPool = async (smartAccount: string): Promise<boolean> => {
+    if (!connex || !smartAccount) return false;
 
     try {
-      const { hasCode } = await connex.thor.account(stakingWallet).get();
+      const { hasCode } = await connex.thor.account(smartAccount).get();
       return hasCode;
     } catch {
       return false;
@@ -115,22 +114,23 @@ export function useUserInfo() {
     }
 
     try {
-      // 1. Get stakingTokenId
-      const stakingTokenId = await fetchTokenId(account);
+      // 1. Get tokenId
+      const tokenId = await fetchTokenId(account);
 
-      // 2. Get staking wallet address
-      const stakingWallet = await fetchSmartAccountAddress(stakingTokenId);
+      // 2. Get smart account address
+      const smartAccountAddress = await fetchSmartAccountAddress(tokenId);
 
       // 3. Get other info in parallel
       const [hasPool, passportDelegatedTo] = await Promise.all([
-        checkHasPool(stakingWallet),
-        fetchPassportDelegation(stakingWallet),
+        checkHasPool(smartAccountAddress),
+        fetchPassportDelegation(smartAccountAddress),
       ]);
 
       return {
         account,
-        stakingTokenId,
-        stakingWallet,
+        tokenId,
+        smartAccountAddress,
+        stakingTokenId: tokenId, // 兼容性别名
         hasPool,
         passportAddress: passportDelegatedTo,
       };

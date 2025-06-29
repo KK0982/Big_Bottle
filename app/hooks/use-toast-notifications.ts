@@ -112,11 +112,9 @@ export function useToastNotifications() {
   const showLoadingToast = useCallback(
     (operation: "stake" | "unstake") => {
       const title = operation === "stake" ? "Processing Stake..." : "Processing Unstake...";
-      const description = "Please confirm the transaction in your wallet.";
-      
+
       return toast({
         title,
-        description,
         status: "info",
         duration: null, // Keep open until manually closed
         isClosable: false,

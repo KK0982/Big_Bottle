@@ -33,22 +33,22 @@ export interface ExecuteWithAuthorizationMessage {
   nonce: string;
 }
 
-// Token balance information (raw blockchain values)
+// Token balance information
+export interface TokenBalance {
+  b3tr: bigint;
+  vot3: bigint;
+  convertedB3tr: bigint;
+  availableB3tr: bigint;
+  availableVot3: bigint;
+}
+
+// Raw token balance (legacy support)
 export interface TokenBalanceRaw {
   b3tr: bigint;
   vot3: bigint;
 }
 
-// Token balance information (formatted for display)
-export interface TokenBalance {
-  b3tr: bigint,
-  vot3: bigint,
-  convertedB3tr: bigint,
-  availableB3tr: bigint,
-  availableVot3: bigint,
-}
-
-// Token balance utilities
+// Token balance utilities (legacy support)
 export interface TokenBalanceUtils {
   formatBalance: (balance: TokenBalanceRaw) => TokenBalance;
   parseBalance: (balance: TokenBalance) => TokenBalanceRaw;
@@ -58,8 +58,9 @@ export interface TokenBalanceUtils {
 // User information interface
 export interface UserInfo {
   account: string | null;
-  stakingTokenId: string;
-  stakingWallet: string;
+  tokenId: string;
+  smartAccountAddress: string;
+  stakingTokenId?: string;
   hasPool: boolean;
   passportAddress?: string;
 }
@@ -121,38 +122,16 @@ export interface RewardsInfo {
   rewardRate: number;
 }
 
-// Base operation parameters
-export interface BaseOperationParams {
-  signingCallback?: SigningCallbackFunc;
-}
-
 // Staking operation parameters
-export interface StakingOperationParams extends BaseOperationParams {
+export interface StakingOperationParams {
   b3tr: bigint;
   vot3: bigint;
+  signingCallback?: SigningCallbackFunc;
 }
 
 // Withdrawal operation parameters
 export interface WithdrawalOperationParams extends StakingOperationParams {
   recipient: string;
-}
-
-// Simplified staking parameters for UI
-export interface StakingUIParams {
-  amount: string;
-  tokenType: 'B3TR' | 'VOT3';
-}
-
-// Operation result interface
-export interface OperationResult {
-  success: boolean;
-  txid?: string;
-  error?: StakingError;
-  meta?: {
-    blockID: string;
-    blockNumber: number;
-    blockTimestamp: number;
-  };
 }
 
 // Smart account signature result
@@ -172,19 +151,13 @@ export interface AppConfig {
   APP_NAME: string;
 }
 
-// Contract addresses - 简化版本，只保留实际使用的合约
+// Contract addresses
 export interface ContractAddresses {
-  // 核心 staking 合约
   VeDelegate: string;
   B3TR: string;
   VOT3: string;
   VePassport: string;
-
-  // 投票和治理合约
   VeBetterDAO: string;
-
-  // 奖励合约
-  RewardPool: string;
 }
 
 // Query configuration
@@ -217,4 +190,16 @@ export interface LoadingStates {
   isUnstaking: boolean;
   isCreatingPool: boolean;
   isDelegating: boolean;
+}
+
+// Operation result interface
+export interface OperationResult {
+  success: boolean;
+  txid?: string;
+  meta?: {
+    blockID: string;
+    blockNumber: number;
+    blockTimestamp: number;
+  };
+  error?: StakingError;
 }

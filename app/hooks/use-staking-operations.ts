@@ -14,7 +14,11 @@ import type {
   OperationResult,
   StakingError,
 } from "../types";
-import { amountToBigInt, validateTokenAmount, checkSufficientBalance } from "../utils/token-balance";
+import {
+  amountToBigInt,
+  validateTokenAmount,
+  checkSufficientBalance,
+} from "../utils/token-balance";
 import { performSecurityCheck, rateLimiter } from "../utils/staking-security";
 import { getQueryCacheManager } from "../utils/query-cache-manager";
 import { useBalanceQuery } from "./use-balance-query";
@@ -28,7 +32,9 @@ export function useStakingOperations() {
 
   // Get user balances for validation
   const { balance: accountBalance } = useBalanceQuery(account || undefined);
-  const { balance: stakingBalance } = useBalanceQuery(userInfo.stakingWallet || undefined);
+  const { balance: stakingBalance } = useBalanceQuery(
+    userInfo.smartAccountAddress || undefined
+  );
 
   // Get cache manager for optimizations
   const cacheManager = getQueryCacheManager();
@@ -36,12 +42,15 @@ export function useStakingOperations() {
   /**
    * Create a standardized staking error
    */
-  const createStakingError = useCallback((message: string, code?: string, details?: any): StakingError => {
-    const error = new Error(message) as StakingError;
-    error.code = code;
-    error.details = details;
-    return error;
-  }, []);
+  const createStakingError = useCallback(
+    (message: string, code?: string, details?: any): StakingError => {
+      const error = new Error(message) as StakingError;
+      error.code = code;
+      error.details = details;
+      return error;
+    },
+    []
+  );
 
   /**
    * Validate staking prerequisites
@@ -53,10 +62,13 @@ export function useStakingOperations() {
     if (!account) {
       throw createStakingError("Wallet not connected", "NO_ACCOUNT");
     }
-    if (!userInfo.stakingWallet) {
-      throw createStakingError("Smart account not available", "NO_SMART_ACCOUNT");
+    if (!userInfo.smartAccountAddress) {
+      throw createStakingError(
+        "Smart account not available",
+        "NO_SMART_ACCOUNT"
+      );
     }
-  }, [connex, account, userInfo.stakingWallet, createStakingError]);
+  }, [connex, account, userInfo.smartAccountAddress, createStakingError]);
 
   /**
    * Build smart account signature for authorization
@@ -82,7 +94,7 @@ export function useStakingOperations() {
         name: "vedelegate.vet",
         version: "1",
         chainId: parseInt(chainId.slice(2), 16), // Convert hex to number
-        verifyingContract: userInfo.stakingWallet,
+        verifyingContract: userInfo.smartAccountAddress,
       };
 
       const types: ExecuteWithAuthorizationTypes = {
@@ -117,7 +129,7 @@ export function useStakingOperations() {
         signature: signature,
       } as SmartAccountSignature;
     },
-    [connex, userInfo.stakingWallet]
+    [connex, userInfo.smartAccountAddress]
   );
 
   /**
@@ -131,7 +143,7 @@ export function useStakingOperations() {
       operation: number = 0,
       signingCallback?: SigningCallbackFunc
     ) => {
-      if (!connex || !userInfo.stakingWallet) {
+      if (!connex || !userInfo.smartAccountAddress) {
         throw new Error("Missing smart account");
       }
 
@@ -151,7 +163,7 @@ export function useStakingOperations() {
         );
 
         return connex.thor
-          .account(userInfo.stakingWallet)
+          .account(userInfo.smartAccountAddress)
           .method({
             inputs: [
               { name: "to", type: "address" },
@@ -176,7 +188,7 @@ export function useStakingOperations() {
           );
       } else {
         return connex.thor
-          .account(userInfo.stakingWallet)
+          .account(userInfo.smartAccountAddress)
           .method({
             inputs: [
               { name: "to", type: "address" },
@@ -190,20 +202,25 @@ export function useStakingOperations() {
           .asClause(to, value, data, operation);
       }
     },
-    [connex, userInfo.stakingWallet, buildSmartAccountSignature]
+    [connex, userInfo.smartAccountAddress, buildSmartAccountSignature]
   );
 
   /**
    * Create staking pool if it doesn't exist
    */
   const createPool = useCallback(async () => {
-    if (!connex || !account || !userInfo.stakingTokenId) {
+    if (
+      !connex ||
+      !account ||
+      !userInfo.stakingTokenId ||
+      !userInfo.smartAccountAddress
+    ) {
       throw new Error("Missing required dependencies");
     }
 
     // Check if smart account already exists
     const { hasCode } = await connex.thor
-      .account(userInfo.stakingWallet)
+      .account(userInfo.smartAccountAddress)
       .get();
 
     if (!hasCode) {
@@ -219,7 +236,11 @@ export function useStakingOperations() {
           name: "createPool",
           outputs: [],
         })
-        .asClause(userInfo.stakingTokenId, account, `embed:${APP_CONFIG.APP_ID}`);
+        .asClause(
+          userInfo.stakingTokenId,
+          account,
+          `embed:${APP_CONFIG.APP_ID}`
+        );
 
       return clause;
     }
@@ -232,15 +253,20 @@ export function useStakingOperations() {
    */
   const buildDepositClauses = useCallback(
     async ({ b3tr, vot3, signingCallback }: StakingOperationParams) => {
-      if (!connex || !account) {
-        throw new Error("Missing wallet connection");
+      if (
+        !connex ||
+        !account ||
+        !userInfo.smartAccountAddress ||
+        !userInfo.stakingTokenId
+      ) {
+        throw new Error("Missing wallet connection or user info");
       }
 
       const clauses: any[] = [];
 
       // 1. Create staking pool if needed
       const { hasCode } = await connex.thor
-        .account(userInfo.stakingWallet)
+        .account(userInfo.smartAccountAddress)
         .get();
 
       if (!hasCode) {
@@ -256,7 +282,11 @@ export function useStakingOperations() {
               name: "createPool",
               outputs: [],
             })
-            .asClause(userInfo.stakingTokenId, account, `embed:${APP_CONFIG.APP_ID}`)
+            .asClause(
+              userInfo.stakingTokenId,
+              account,
+              `embed:${APP_CONFIG.APP_ID}`
+            )
         );
       }
 
@@ -273,7 +303,7 @@ export function useStakingOperations() {
               name: "transfer",
               outputs: [],
             })
-            .asClause(userInfo.stakingWallet, String(vot3))
+            .asClause(userInfo.smartAccountAddress, String(vot3))
         );
       }
 
@@ -291,7 +321,7 @@ export function useStakingOperations() {
               name: "transfer",
               outputs: [],
             })
-            .asClause(userInfo.stakingWallet, String(b3tr)),
+            .asClause(userInfo.smartAccountAddress, String(b3tr)),
 
           // Approve B3TR for conversion to VOT3
           await executeOnSmartAccount(
@@ -344,7 +374,7 @@ export function useStakingOperations() {
               name: "delegatePassport",
               outputs: [],
             })
-            .asClause(userInfo.stakingWallet),
+            .asClause(userInfo.smartAccountAddress),
 
           // Accept the Passport on the Smart Wallet
           await executeOnSmartAccount(
@@ -364,7 +394,7 @@ export function useStakingOperations() {
         );
       }
 
-      // 5. Set app voting weight to 100%
+      // 6. Set app voting weight to 100%
       clauses.push(
         await executeOnSmartAccount(
           Addresses.VeBetterDAO,
@@ -374,15 +404,12 @@ export function useStakingOperations() {
             .method({
               inputs: [
                 { name: "appId", type: "bytes32" },
-                { name: "percentage", type: "uint256" }
+                { name: "percentage", type: "uint256" },
               ],
               name: "setAppVotingWeight",
               outputs: [],
             })
-            .asClause(
-              APP_CONFIG.APP_ID, // APP_ID is already in bytes32 format
-              "100" // 100% weight
-            ).data,
+            .asClause(APP_CONFIG.APP_ID, "100").data,
           0,
           signingCallback
         )
@@ -550,7 +577,7 @@ export function useStakingOperations() {
         const balanceCheck = checkSufficientBalance(
           amountValidation.value!,
           accountBalance.b3tr,
-          'B3TR'
+          "B3TR"
         );
         if (!balanceCheck.isValid) {
           throw createStakingError(balanceCheck.error!, "INSUFFICIENT_BALANCE");
@@ -584,8 +611,8 @@ export function useStakingOperations() {
         if (cacheManager) {
           cacheManager.optimisticallyUpdateBalance(
             account!,
-            userInfo.stakingWallet!,
-            'stake',
+            userInfo.smartAccountAddress!,
+            "stake",
             amountValidation.value!
           );
         }
@@ -595,7 +622,10 @@ export function useStakingOperations() {
 
         // Invalidate cache after successful transaction
         if (cacheManager) {
-          await cacheManager.invalidateStakingData(account!, userInfo.stakingWallet);
+          await cacheManager.invalidateStakingData(
+            account!,
+            userInfo.smartAccountAddress
+          );
         }
 
         return {
@@ -608,12 +638,21 @@ export function useStakingOperations() {
 
         // Revert optimistic updates on failure
         if (cacheManager) {
-          cacheManager.revertOptimisticUpdates(account!, userInfo.stakingWallet!);
+          cacheManager.revertOptimisticUpdates(
+            account!,
+            userInfo.smartAccountAddress!
+          );
         }
 
-        const stakingError = error instanceof Error && 'code' in error
-          ? error as StakingError
-          : createStakingError(error instanceof Error ? error.message : "Unknown staking error", "UNKNOWN_ERROR");
+        const stakingError =
+          error instanceof Error && "code" in error
+            ? (error as StakingError)
+            : createStakingError(
+                error instanceof Error
+                  ? error.message
+                  : "Unknown staking error",
+                "UNKNOWN_ERROR"
+              );
 
         return {
           success: false,
@@ -621,7 +660,16 @@ export function useStakingOperations() {
         };
       }
     },
-    [connex, account, userInfo.stakingWallet, validateStakingPrerequisites, createStakingError, accountBalance.b3tr, buildDepositClauses, cacheManager]
+    [
+      connex,
+      account,
+      userInfo.smartAccountAddress,
+      validateStakingPrerequisites,
+      createStakingError,
+      accountBalance.b3tr,
+      buildDepositClauses,
+      cacheManager,
+    ]
   );
 
   /**
@@ -644,10 +692,13 @@ export function useStakingOperations() {
         const balanceCheck = checkSufficientBalance(
           amountValidation.value!,
           totalStaked,
-          'VOT3'
+          "VOT3"
         );
         if (!balanceCheck.isValid) {
-          throw createStakingError(balanceCheck.error!, "INSUFFICIENT_STAKED_BALANCE");
+          throw createStakingError(
+            balanceCheck.error!,
+            "INSUFFICIENT_STAKED_BALANCE"
+          );
         }
 
         // Perform security check
@@ -667,8 +718,8 @@ export function useStakingOperations() {
 
         // Build transaction clauses - 直接兑换为 B3TR
         const clauses = await buildWithdrawClauses({
-          b3tr: withdrawAmount,  // 兑换为 B3TR
-          vot3: BigInt(0),       // 不直接提取 VOT3
+          b3tr: withdrawAmount, // 兑换为 B3TR
+          vot3: BigInt(0), // 不直接提取 VOT3
           recipient: account!,
         });
 
@@ -680,8 +731,8 @@ export function useStakingOperations() {
         if (cacheManager) {
           cacheManager.optimisticallyUpdateBalance(
             account!,
-            userInfo.stakingWallet!,
-            'unstake',
+            userInfo.smartAccountAddress!,
+            "unstake",
             amountValidation.value!
           );
         }
@@ -691,7 +742,10 @@ export function useStakingOperations() {
 
         // Invalidate cache after successful transaction
         if (cacheManager) {
-          await cacheManager.invalidateStakingData(account!, userInfo.stakingWallet);
+          await cacheManager.invalidateStakingData(
+            account!,
+            userInfo.smartAccountAddress
+          );
         }
 
         return {
@@ -704,12 +758,21 @@ export function useStakingOperations() {
 
         // Revert optimistic updates on failure
         if (cacheManager) {
-          cacheManager.revertOptimisticUpdates(account!, userInfo.stakingWallet!);
+          cacheManager.revertOptimisticUpdates(
+            account!,
+            userInfo.smartAccountAddress!
+          );
         }
 
-        const stakingError = error instanceof Error && 'code' in error
-          ? error as StakingError
-          : createStakingError(error instanceof Error ? error.message : "Unknown unstaking error", "UNKNOWN_ERROR");
+        const stakingError =
+          error instanceof Error && "code" in error
+            ? (error as StakingError)
+            : createStakingError(
+                error instanceof Error
+                  ? error.message
+                  : "Unknown unstaking error",
+                "UNKNOWN_ERROR"
+              );
 
         return {
           success: false,
@@ -717,7 +780,16 @@ export function useStakingOperations() {
         };
       }
     },
-    [connex, account, userInfo.stakingWallet, validateStakingPrerequisites, createStakingError, stakingBalance, buildWithdrawClauses, cacheManager]
+    [
+      connex,
+      account,
+      userInfo.smartAccountAddress,
+      validateStakingPrerequisites,
+      createStakingError,
+      stakingBalance,
+      buildWithdrawClauses,
+      cacheManager,
+    ]
   );
 
   return {
@@ -741,9 +813,9 @@ export function useStakingOperations() {
     createStakingError,
 
     // State information
-    canStake: !!account && !!connex && !!userInfo.stakingWallet,
+    canStake: !!account && !!connex && !!userInfo.smartAccountAddress,
     isConnected: !!account && !!connex,
-    hasSmartAccount: !!userInfo.stakingWallet,
+    hasSmartAccount: !!userInfo.smartAccountAddress,
     accountBalance,
     stakingBalance,
 
