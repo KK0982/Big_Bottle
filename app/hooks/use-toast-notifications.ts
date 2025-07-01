@@ -31,7 +31,10 @@ export function useToastNotifications() {
     (txid: string, amount: string) => {
       showToast({
         title: "Staking Successful!",
-        description: `Successfully staked ${amount} B3TR. Transaction: ${txid.slice(0, 10)}...`,
+        description: `Successfully staked ${amount} B3TR. Transaction: ${txid.slice(
+          0,
+          10
+        )}...`,
         status: "success",
         duration: 7000,
       });
@@ -43,7 +46,10 @@ export function useToastNotifications() {
     (txid: string, amount: string) => {
       showToast({
         title: "Unstaking Successful!",
-        description: `Successfully unstaked ${amount} B3TR. Transaction: ${txid.slice(0, 10)}...`,
+        description: `Successfully unstaked ${amount} B3TR. Transaction: ${txid.slice(
+          0,
+          10
+        )}...`,
         status: "success",
         duration: 7000,
       });
@@ -67,7 +73,8 @@ export function useToastNotifications() {
           break;
         case "INSUFFICIENT_STAKED_BALANCE":
           title = "Insufficient Staked Balance";
-          description = "You don't have enough staked B3TR to unstake this amount.";
+          description =
+            "You don't have enough staked B3TR to unstake this amount.";
           break;
         case "INVALID_AMOUNT":
           title = "Invalid Amount";
@@ -95,7 +102,11 @@ export function useToastNotifications() {
   );
 
   const showOperationResult = useCallback(
-    (result: OperationResult, amount: string, operation: "stake" | "unstake") => {
+    (
+      result: OperationResult,
+      amount: string,
+      operation: "stake" | "unstake"
+    ) => {
       if (result.success && result.txid) {
         if (operation === "stake") {
           showStakingSuccess(result.txid, amount);
@@ -111,7 +122,8 @@ export function useToastNotifications() {
 
   const showLoadingToast = useCallback(
     (operation: "stake" | "unstake") => {
-      const title = operation === "stake" ? "Processing Stake..." : "Processing Unstake...";
+      const title =
+        operation === "stake" ? "Processing Stake..." : "Processing Unstake...";
 
       return toast({
         title,
@@ -123,6 +135,13 @@ export function useToastNotifications() {
     [toast]
   );
 
+  const closeToast = useCallback(
+    (toastId: string | number) => {
+      toast.close(toastId);
+    },
+    [toast]
+  );
+
   return {
     showToast,
     showStakingSuccess,
@@ -130,5 +149,6 @@ export function useToastNotifications() {
     showStakingError,
     showOperationResult,
     showLoadingToast,
+    closeToast,
   };
 }

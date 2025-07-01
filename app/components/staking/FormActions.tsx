@@ -49,7 +49,7 @@ export function FormActions({
       )}
 
       <Button
-        bg="rgba(1, 227, 92, 0.5)"
+        bg="rgba(1, 227, 92, 1)"
         color="white"
         borderRadius="20px"
         fontWeight="600"
@@ -71,7 +71,7 @@ export function FormActions({
         {!isConnected ? "Connect Wallet" : submitText}
       </Button>
 
-      {(warningText || footerText) && (
+      {/* {(warningText || footerText) && (
         <VStack spacing="12px" align="stretch">
           {warningText && (
             <Text
@@ -105,7 +105,7 @@ export function FormActions({
             </Text>
           )}
         </VStack>
-      )}
+      )} */}
     </VStack>
   );
 }

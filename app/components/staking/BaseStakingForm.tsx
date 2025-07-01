@@ -32,7 +32,8 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
     userInfo.smartAccountAddress || undefined
   );
   const { stake, unstake, canStake, isConnected } = useStakingOperations();
-  const { showOperationResult, showLoadingToast } = useToastNotifications();
+  const { showOperationResult, showLoadingToast, closeToast } =
+    useToastNotifications();
 
   const isStakeMode = mode === "stake";
   const balance = isStakeMode
@@ -81,6 +82,9 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
       const operation = isStakeMode ? stake : unstake;
       const result = await operation(amount);
 
+      // Close loading toast
+      closeToast(loadingToastId);
+
       showOperationResult(result, amount, mode);
 
       if (result.success) {
@@ -88,6 +92,10 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
       }
     } catch (error) {
       console.error(`${mode} failed:`, error);
+
+      // Close loading toast on error
+      closeToast(loadingToastId);
+
       setValidationError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
@@ -103,6 +111,7 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
     stake,
     unstake,
     showLoadingToast,
+    closeToast,
     showOperationResult,
     onClose,
   ]);

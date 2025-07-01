@@ -77,6 +77,7 @@ export const TokenInput = forwardRef<HTMLInputElement, TokenInputProps>(
               value={value}
               onChange={(e) => onChange(e.target.value)}
               placeholder={placeholder}
+              flex={1}
               fontSize="24px"
               fontWeight="600"
               color={value ? "black" : "rgba(0,0,0,0.25)"}
