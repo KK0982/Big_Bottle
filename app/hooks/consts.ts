@@ -17,6 +17,7 @@ export const Addresses: ContractAddresses = {
 
   // 投票和治理合约
   VeBetterDAO: "0x89A00Bb0947a30FF95BEeF77a66AEdE3842Fe5B7",
+  VeDelegateVotes: "0xeb71148c9B3cd57e228c2152d79f6e78F5F1ef9a",
 };
 
 // BigBottle application unique identifier in VeBetterDAO ecosystem

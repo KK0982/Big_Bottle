@@ -158,6 +158,7 @@ export interface ContractAddresses {
   VOT3: string;
   VePassport: string;
   VeBetterDAO: string;
+  VeDelegateVotes: string;
 }
 
 // Query configuration

@@ -9,6 +9,7 @@ import { useToastNotifications } from "../../hooks/use-toast-notifications";
 import {
   validateTokenAmount,
   checkSufficientBalance,
+  amountToBigInt,
 } from "../../utils/token-balance";
 import { TokenInput } from "./TokenInput";
 import { FormActions } from "./FormActions";
@@ -17,6 +18,11 @@ interface BaseStakingFormProps {
   mode: "stake" | "unstake";
   onClose: () => void;
 }
+
+const WEI_PER_B3TR = 10n ** 18n;
+const MIN_FIRST_STAKE_AMOUNT_B3TR = 50;
+const MIN_FIRST_STAKE_AMOUNT_WEI =
+  BigInt(MIN_FIRST_STAKE_AMOUNT_B3TR) * WEI_PER_B3TR;
 
 export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
   const [amount, setAmount] = useState("");
@@ -49,8 +55,37 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
     if (!validation.isValid) return validation;
 
     const tokenType = isStakeMode ? "B3TR" : "VOT3";
-    return checkSufficientBalance(validation.value!, balance, tokenType);
-  }, [amount, balance, isStakeMode]);
+    const balanceCheck = checkSufficientBalance(
+      validation.value!,
+      balance,
+      tokenType
+    );
+    if (!balanceCheck.isValid) {
+      return { ...balanceCheck, value: validation.value };
+    }
+
+    const isFirstStake = isStakeMode && !userInfo.hasPool;
+    if (isFirstStake) {
+      const currentStakeWei = stakingBalance.b3tr + stakingBalance.vot3;
+      const amountWei = amountToBigInt(amount);
+      if (currentStakeWei + amountWei < MIN_FIRST_STAKE_AMOUNT_WEI) {
+        return {
+          isValid: false,
+          error: `Minimum stake amount is ${MIN_FIRST_STAKE_AMOUNT_B3TR} B3TR`,
+          value: validation.value,
+        };
+      }
+    }
+
+    return { isValid: true, value: validation.value };
+  }, [
+    amount,
+    balance,
+    isStakeMode,
+    userInfo.hasPool,
+    stakingBalance.b3tr,
+    stakingBalance.vot3,
+  ]);
 
   useEffect(() => {
     if (amountValidation.error) {

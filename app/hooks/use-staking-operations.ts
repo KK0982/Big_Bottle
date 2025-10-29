@@ -268,8 +268,9 @@ export function useStakingOperations() {
       const { hasCode } = await connex.thor
         .account(userInfo.smartAccountAddress)
         .get();
+      const createdPool = !hasCode;
 
-      if (!hasCode) {
+      if (createdPool) {
         clauses.push(
           connex.thor
             .account(Addresses.VeDelegate)
@@ -394,26 +395,28 @@ export function useStakingOperations() {
         );
       }
 
-      // 6. Set app voting weight to 100%
-      clauses.push(
-        await executeOnSmartAccount(
-          Addresses.VeBetterDAO,
-          "0",
-          connex.thor
-            .account(Addresses.VeBetterDAO)
-            .method({
-              inputs: [
-                { name: "appId", type: "bytes32" },
-                { name: "percentage", type: "uint256" },
-              ],
-              name: "setAppVotingWeight",
-              outputs: [],
-            })
-            .asClause(APP_CONFIG.APP_ID, "100").data,
-          0,
-          signingCallback
-        )
-      );
+      // 5. If the pool is newly created, set vote preference to 100% for this app
+      if (createdPool) {
+        clauses.push(
+          await executeOnSmartAccount(
+            Addresses.VeDelegateVotes,
+            "0",
+            connex.thor
+              .account(Addresses.VeDelegateVotes)
+              .method({
+                inputs: [
+                  { name: "appIds", type: "bytes32[]" },
+                  { name: "percentages", type: "uint8[]" },
+                ],
+                name: "castVotes",
+                outputs: [],
+              })
+              .asClause([APP_CONFIG.APP_ID], [100]).data,
+            0,
+            signingCallback
+          )
+        );
+      }
 
       return clauses;
     },
