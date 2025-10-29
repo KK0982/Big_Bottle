@@ -30,7 +30,7 @@ function StakingInfoItem({ label, value }: StakingInfoItemProps) {
       <Text
         as="dd"
         fontFamily="Roboto"
-        fontWeight="400"
+        fontWeight="600"
         fontSize={{ base: "0.875rem", md: "1rem" }}
         lineHeight="1.43"
         color="black"
@@ -97,7 +97,7 @@ const StakingCard: React.FC<StakingCardProps> = ({ data, loading }) => {
 
       <Flex as="dl" direction="column" gap="0.5rem">
         <StakingInfoItem
-          label="Staked Balance"
+          label="Staked"
           value={data?.stakedBalance || "0 B3TR"}
         />
         <StakingInfoItem
