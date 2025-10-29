@@ -1,0 +1,13 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+- Avoid using absolute positioning; prefer modern layout methods like flexbox and CSS Grid
+- Consider cross-browser and cross-device compatibility when implementing designs
+- Create responsive and flexible components, avoid hardcoded values when possible
+- Use relative units (rem, em, %, vw, vh) instead of fixed pixel values where appropriate
+- Implement mobile-first responsive design approach
+- Follow semantic HTML structure while matching visual design
+- Ensure accessibility standards are met (WCAG guidelines)
+- Optimize for performance while maintaining design fidelity

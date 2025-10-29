@@ -8,6 +8,8 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 const roboto = Roboto({
   weight: ["400", "500", "700"],
   subsets: ["latin"],
+  display: "swap",
+  preload: true,
 });
 
 export const metadata: Metadata = {

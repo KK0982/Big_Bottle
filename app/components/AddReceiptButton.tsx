@@ -24,7 +24,7 @@ export function AddReceiptButton() {
     <Button
       position="fixed"
       left="50%"
-      bottom="calc(var(--safe-area-bottom) + 24px)"
+      bottom="calc(var(--safe-area-bottom) + 84px)"
       width="64px"
       height="64px"
       borderRadius="20px"
