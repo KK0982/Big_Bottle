@@ -610,7 +610,10 @@ export function useStakingOperations() {
           throw createStakingError("No operations to perform", "NO_OPERATIONS");
         }
 
-        // Optimistically update cache before transaction
+        // Send transaction
+        const result = await connex!.vendor.sign("tx", clauses).request();
+
+        // Optimistically update cache after transaction submission
         if (cacheManager) {
           cacheManager.optimisticallyUpdateBalance(
             account!,
@@ -619,9 +622,6 @@ export function useStakingOperations() {
             amountValidation.value!
           );
         }
-
-        // Send transaction
-        const result = await connex!.vendor.sign("tx", clauses).request();
 
         // Invalidate cache after successful transaction
         if (cacheManager) {
@@ -730,7 +730,10 @@ export function useStakingOperations() {
           throw createStakingError("No operations to perform", "NO_OPERATIONS");
         }
 
-        // Optimistically update cache before transaction
+        // Send transaction
+        const result = await connex!.vendor.sign("tx", clauses).request();
+
+        // Optimistically update cache after transaction submission
         if (cacheManager) {
           cacheManager.optimisticallyUpdateBalance(
             account!,
@@ -739,9 +742,6 @@ export function useStakingOperations() {
             amountValidation.value!
           );
         }
-
-        // Send transaction
-        const result = await connex!.vendor.sign("tx", clauses).request();
 
         // Invalidate cache after successful transaction
         if (cacheManager) {
