@@ -1,11 +1,49 @@
 import { QueryClient } from "@tanstack/react-query";
 import { QueryKeys } from "../hooks/query-utils";
+import { Addresses, APP_CONFIG } from "../hooks/consts";
+import type { TokenBalance } from "../types";
 
 /**
  * Query cache management utilities for VeDelegate staking
  */
 export class QueryCacheManager {
   constructor(private queryClient: QueryClient) {}
+
+  private readonly balanceContracts = {
+    B3TR: Addresses.B3TR,
+    VOT3: Addresses.VOT3,
+  };
+
+  private readonly userInfoContracts = {
+    VeDelegate: Addresses.VeDelegate,
+    VePassport: Addresses.VePassport,
+  };
+
+  private getBalanceKey(address?: string) {
+    if (!address) return null;
+    return QueryKeys.balance(address, this.balanceContracts);
+  }
+
+  private getUserInfoKey(address: string) {
+    return QueryKeys.userInfo(
+      address,
+      this.userInfoContracts,
+      APP_CONFIG.APP_ID
+    );
+  }
+
+  private updateBalanceCache(
+    address: string,
+    updater: (oldBalance: TokenBalance) => TokenBalance
+  ) {
+    const key = this.getBalanceKey(address);
+    if (!key) return;
+
+    this.queryClient.setQueryData<TokenBalance>(key, (oldData) => {
+      if (!oldData) return oldData;
+      return updater(oldData);
+    });
+  }
 
   /**
    * Invalidate all balance-related queries for a user
@@ -14,17 +52,28 @@ export class QueryCacheManager {
     const promises = [];
 
     if (userAddress) {
-      promises.push(
-        this.queryClient.invalidateQueries({
-          queryKey: QueryKeys.balance(userAddress),
-        })
-      );
+      const userBalanceKey = this.getBalanceKey(userAddress);
+      if (userBalanceKey) {
+        promises.push(
+          this.queryClient.invalidateQueries({
+            queryKey: userBalanceKey,
+          })
+        );
+      }
     }
 
     if (smartAccountAddress) {
+      const stakingBalanceKey = this.getBalanceKey(smartAccountAddress);
+      if (stakingBalanceKey) {
+        promises.push(
+          this.queryClient.invalidateQueries({
+            queryKey: stakingBalanceKey,
+          })
+        );
+      }
       promises.push(
         this.queryClient.invalidateQueries({
-          queryKey: QueryKeys.balance(smartAccountAddress),
+          queryKey: QueryKeys.rewards(smartAccountAddress),
         })
       );
     }
@@ -46,13 +95,14 @@ export class QueryCacheManager {
       }),
       
       // Invalidate rewards
-      smartAccountAddress && this.queryClient.invalidateQueries({
-        queryKey: QueryKeys.rewards(smartAccountAddress),
-      }),
+      smartAccountAddress &&
+        this.queryClient.invalidateQueries({
+          queryKey: QueryKeys.rewards(smartAccountAddress),
+        }),
       
       // Invalidate user info (might affect pool status)
       this.queryClient.invalidateQueries({
-        queryKey: QueryKeys.userInfo(userAddress),
+        queryKey: this.getUserInfoKey(userAddress),
       }),
     ].filter(Boolean);
 
@@ -63,23 +113,27 @@ export class QueryCacheManager {
    * Prefetch balance data for better UX
    */
   async prefetchBalances(userAddress: string, smartAccountAddress?: string) {
+    const userBalanceKey = this.getBalanceKey(userAddress);
     const promises = [
-      this.queryClient.prefetchQuery({
-        queryKey: QueryKeys.balance(userAddress),
-        staleTime: 15 * 1000, // 15 seconds
-      }),
+      userBalanceKey &&
+        this.queryClient.prefetchQuery({
+          queryKey: userBalanceKey,
+          staleTime: 15 * 1000, // 15 seconds
+        }),
     ];
 
     if (smartAccountAddress) {
+      const stakingBalanceKey = this.getBalanceKey(smartAccountAddress);
       promises.push(
-        this.queryClient.prefetchQuery({
-          queryKey: QueryKeys.balance(smartAccountAddress),
-          staleTime: 15 * 1000,
-        })
+        stakingBalanceKey &&
+          this.queryClient.prefetchQuery({
+            queryKey: stakingBalanceKey,
+            staleTime: 15 * 1000,
+          })
       );
     }
 
-    await Promise.all(promises);
+    await Promise.all(promises.filter(Boolean));
   }
 
   /**
@@ -104,56 +158,57 @@ export class QueryCacheManager {
     operation: 'stake' | 'unstake',
     amount: number
   ) {
+    const delta = BigInt(Math.floor(amount * 1e18));
+
     if (operation === 'stake') {
       // Staking: 用户 B3TR 减少
-      this.queryClient.setQueryData(
-        QueryKeys.balance(userAddress),
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            b3tr: oldData.b3tr - BigInt(Math.floor(amount * 1e18)),
-          };
-        }
-      );
+      this.updateBalanceCache(userAddress, (oldData) => {
+        const nextB3tr =
+          oldData.b3tr > delta ? oldData.b3tr - delta : BigInt(0);
+        return {
+          ...oldData,
+          b3tr: nextB3tr,
+          availableB3tr: nextB3tr + oldData.convertedB3tr,
+        };
+      });
 
       // Staking: Smart Account VOT3 增加
-      this.queryClient.setQueryData(
-        QueryKeys.balance(smartAccountAddress),
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            vot3: oldData.vot3 + BigInt(Math.floor(amount * 1e18)),
-          };
-        }
-      );
+      this.updateBalanceCache(smartAccountAddress, (oldData) => {
+        const nextVot3 = oldData.vot3 + delta;
+        const availableVot3 =
+          nextVot3 > oldData.convertedB3tr
+            ? nextVot3 - oldData.convertedB3tr
+            : BigInt(0);
+        return {
+          ...oldData,
+          vot3: nextVot3,
+          availableVot3,
+        };
+      });
     } else {
       // Unstaking: 用户 B3TR 增加 (直接兑换为 B3TR)
-      this.queryClient.setQueryData(
-        QueryKeys.balance(userAddress),
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            b3tr: oldData.b3tr + BigInt(Math.floor(amount * 1e18)),
-          };
-        }
-      );
+      this.updateBalanceCache(userAddress, (oldData) => {
+        const nextB3tr = oldData.b3tr + delta;
+        return {
+          ...oldData,
+          b3tr: nextB3tr,
+          availableB3tr: nextB3tr + oldData.convertedB3tr,
+        };
+      });
 
       // Unstaking: Smart Account VOT3 减少
-      this.queryClient.setQueryData(
-        QueryKeys.balance(smartAccountAddress),
-        (oldData: any) => {
-          if (!oldData) return oldData;
-          return {
-            ...oldData,
-            vot3: oldData.vot3 > BigInt(Math.floor(amount * 1e18))
-              ? oldData.vot3 - BigInt(Math.floor(amount * 1e18))
-              : BigInt(0),
-          };
-        }
-      );
+      this.updateBalanceCache(smartAccountAddress, (oldData) => {
+        const nextVot3 = oldData.vot3 > delta ? oldData.vot3 - delta : BigInt(0);
+        const availableVot3 =
+          nextVot3 > oldData.convertedB3tr
+            ? nextVot3 - oldData.convertedB3tr
+            : BigInt(0);
+        return {
+          ...oldData,
+          vot3: nextVot3,
+          availableVot3,
+        };
+      });
     }
   }
 
