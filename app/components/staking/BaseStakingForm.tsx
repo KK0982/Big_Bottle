@@ -11,6 +11,7 @@ import {
   checkSufficientBalance,
   amountToBigInt,
 } from "../../utils/token-balance";
+import { MIN_STAKING_AMOUNT } from "../../utils/staking-security";
 import { TokenInput } from "./TokenInput";
 import { FormActions } from "./FormActions";
 
@@ -23,6 +24,7 @@ const WEI_PER_B3TR = 10n ** 18n;
 const MIN_FIRST_STAKE_AMOUNT_B3TR = 50;
 const MIN_FIRST_STAKE_AMOUNT_WEI =
   BigInt(MIN_FIRST_STAKE_AMOUNT_B3TR) * WEI_PER_B3TR;
+const MIN_OPERATION_AMOUNT_B3TR = Number(MIN_STAKING_AMOUNT) / 1e18;
 
 export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
   const [amount, setAmount] = useState("");
@@ -55,6 +57,7 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
     if (!validation.isValid) return validation;
 
     const tokenType = isStakeMode ? "B3TR" : "VOT3";
+    const minAmountLabel = `${MIN_OPERATION_AMOUNT_B3TR} ${tokenType}`;
     const balanceCheck = checkSufficientBalance(
       validation.value!,
       balance,
@@ -64,10 +67,19 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
       return { ...balanceCheck, value: validation.value };
     }
 
+    // Enforce minimum stake/unstake amount to avoid dust operations
+    const amountWei = amountToBigInt(amount, tokenType);
+    if (amountWei < MIN_STAKING_AMOUNT) {
+      return {
+        isValid: false,
+        error: `Minimum staking amount is ${minAmountLabel}`,
+        value: validation.value,
+      };
+    }
+
     const isFirstStake = isStakeMode && !userInfo.hasPool;
     if (isFirstStake) {
       const currentStakeWei = stakingBalance.b3tr + stakingBalance.vot3;
-      const amountWei = amountToBigInt(amount);
       if (currentStakeWei + amountWei < MIN_FIRST_STAKE_AMOUNT_WEI) {
         return {
           isValid: false,
