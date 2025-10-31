@@ -623,13 +623,21 @@ export function useStakingOperations() {
           );
         }
 
-        // Invalidate cache after successful transaction (non-blocking)
-        if (cacheManager) {
-          cacheManager
-            .invalidateStakingData(account!, userInfo.smartAccountAddress)
-            .catch((err) =>
-              console.warn("Failed to invalidate staking data:", err)
-            );
+        // Refresh balances after transaction confirmation
+        if (cacheManager && connex) {
+          (async () => {
+            try {
+              await connex.thor.transaction(result.txid).getReceipt();
+            } catch (err) {
+              console.warn("Waiting for stake receipt failed:", err);
+            } finally {
+              cacheManager
+                .invalidateStakingData(account!, userInfo.smartAccountAddress)
+                .catch((err) =>
+                  console.warn("Failed to invalidate staking data:", err)
+                );
+            }
+          })();
         }
 
         return {
@@ -744,13 +752,21 @@ export function useStakingOperations() {
           );
         }
 
-        // Invalidate cache after successful transaction (non-blocking)
-        if (cacheManager) {
-          cacheManager
-            .invalidateStakingData(account!, userInfo.smartAccountAddress)
-            .catch((err) =>
-              console.warn("Failed to invalidate staking data:", err)
-            );
+        // Refresh balances after transaction confirmation
+        if (cacheManager && connex) {
+          (async () => {
+            try {
+              await connex.thor.transaction(result.txid).getReceipt();
+            } catch (err) {
+              console.warn("Waiting for unstake receipt failed:", err);
+            } finally {
+              cacheManager
+                .invalidateStakingData(account!, userInfo.smartAccountAddress)
+                .catch((err) =>
+                  console.warn("Failed to invalidate staking data:", err)
+                );
+            }
+          })();
         }
 
         return {
