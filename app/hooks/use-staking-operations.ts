@@ -623,12 +623,13 @@ export function useStakingOperations() {
           );
         }
 
-        // Invalidate cache after successful transaction
+        // Invalidate cache after successful transaction (non-blocking)
         if (cacheManager) {
-          await cacheManager.invalidateStakingData(
-            account!,
-            userInfo.smartAccountAddress
-          );
+          cacheManager
+            .invalidateStakingData(account!, userInfo.smartAccountAddress)
+            .catch((err) =>
+              console.warn("Failed to invalidate staking data:", err)
+            );
         }
 
         return {
@@ -743,12 +744,13 @@ export function useStakingOperations() {
           );
         }
 
-        // Invalidate cache after successful transaction
+        // Invalidate cache after successful transaction (non-blocking)
         if (cacheManager) {
-          await cacheManager.invalidateStakingData(
-            account!,
-            userInfo.smartAccountAddress
-          );
+          cacheManager
+            .invalidateStakingData(account!, userInfo.smartAccountAddress)
+            .catch((err) =>
+              console.warn("Failed to invalidate staking data:", err)
+            );
         }
 
         return {
