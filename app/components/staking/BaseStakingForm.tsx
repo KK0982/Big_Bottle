@@ -57,7 +57,7 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
     if (!validation.isValid) return validation;
 
     const tokenType = isStakeMode ? "B3TR" : "VOT3";
-    const minAmountLabel = `${MIN_OPERATION_AMOUNT_B3TR} ${tokenType}`;
+    const minAmountLabel = `${MIN_OPERATION_AMOUNT_B3TR} B3TR`;
     const balanceCheck = checkSufficientBalance(
       validation.value!,
       balance,
@@ -67,9 +67,9 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
       return { ...balanceCheck, value: validation.value };
     }
 
-    // Enforce minimum stake/unstake amount to avoid dust operations
+    // Enforce minimum stake amount to avoid dust operations
     const amountWei = amountToBigInt(amount, tokenType);
-    if (amountWei < MIN_STAKING_AMOUNT) {
+    if (isStakeMode && amountWei < MIN_STAKING_AMOUNT) {
       return {
         isValid: false,
         error: `Minimum staking amount is ${minAmountLabel}`,
