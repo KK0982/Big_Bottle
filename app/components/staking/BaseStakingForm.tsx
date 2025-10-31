@@ -107,13 +107,36 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
     }
   }, [amountValidation]);
 
+  const formatAmount = useCallback((value: number) => {
+    const truncated = Math.floor(value * 10000) / 10000;
+    return truncated.toFixed(4);
+  }, []);
+
   const handlePercentageClick = useCallback(
     (percentage: number) => {
       const balanceNum = Number(balance) / 1e18;
-      const newAmount = (balanceNum * percentage) / 100;
-      setAmount(newAmount.toString());
+      const rawAmount = (balanceNum * percentage) / 100;
+      setAmount(formatAmount(rawAmount));
     },
-    [balance]
+    [balance, formatAmount]
+  );
+
+  const handleInputChange = useCallback(
+    (value: string) => {
+      if (!value) {
+        setAmount("");
+        return;
+      }
+
+      const numeric = Number(value);
+      if (Number.isNaN(numeric)) {
+        setAmount(value);
+        return;
+      }
+
+      setAmount(formatAmount(numeric));
+    },
+    [formatAmount]
   );
 
   const handleSubmit = useCallback(async () => {
@@ -181,7 +204,7 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
       <TokenInput
         ref={inputRef}
         value={amount}
-        onChange={setAmount}
+        onChange={handleInputChange}
         balance={balance}
         tokenSymbol={tokenSymbol}
         tokenIcon={tokenIcon}
