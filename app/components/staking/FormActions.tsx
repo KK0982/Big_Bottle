@@ -15,6 +15,7 @@ interface FormActionsProps {
   isDisabled: boolean;
   onSubmit: () => void;
   submitText: string;
+  loadingText?: string;
   validationError?: string | null;
   warningText?: string;
   footerText?: string;
@@ -26,6 +27,7 @@ export function FormActions({
   isDisabled,
   onSubmit,
   submitText,
+  loadingText,
   validationError,
   warningText,
   footerText,
@@ -65,7 +67,7 @@ export function FormActions({
         }}
         isDisabled={isDisabled}
         isLoading={isLoading}
-        loadingText="Processing..."
+        loadingText={loadingText ?? "Processing..."}
         onClick={onSubmit}
       >
         {!isConnected ? "Connect Wallet" : submitText}

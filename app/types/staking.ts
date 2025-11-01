@@ -203,4 +203,5 @@ export interface OperationResult {
     blockTimestamp: number;
   };
   error?: StakingError;
+  waitForConfirmation?: () => Promise<void>;
 }

@@ -57,6 +57,7 @@ export class QueryCacheManager {
         promises.push(
           this.queryClient.invalidateQueries({
             queryKey: userBalanceKey,
+            refetchType: "active",
           })
         );
       }
@@ -68,12 +69,14 @@ export class QueryCacheManager {
         promises.push(
           this.queryClient.invalidateQueries({
             queryKey: stakingBalanceKey,
+            refetchType: "active",
           })
         );
       }
       promises.push(
         this.queryClient.invalidateQueries({
           queryKey: QueryKeys.rewards(smartAccountAddress),
+          refetchType: "active",
         })
       );
     }
@@ -92,17 +95,20 @@ export class QueryCacheManager {
       // Invalidate staking data
       this.queryClient.invalidateQueries({
         queryKey: QueryKeys.stakingData(userAddress, smartAccountAddress),
+        refetchType: "active",
       }),
       
       // Invalidate rewards
       smartAccountAddress &&
         this.queryClient.invalidateQueries({
           queryKey: QueryKeys.rewards(smartAccountAddress),
+          refetchType: "active",
         }),
       
       // Invalidate user info (might affect pool status)
       this.queryClient.invalidateQueries({
         queryKey: this.getUserInfoKey(userAddress),
+        refetchType: "active",
       }),
     ].filter(Boolean);
 
@@ -113,27 +119,21 @@ export class QueryCacheManager {
    * Prefetch balance data for better UX
    */
   async prefetchBalances(userAddress: string, smartAccountAddress?: string) {
-    const userBalanceKey = this.getBalanceKey(userAddress);
-    const promises = [
-      userBalanceKey &&
-        this.queryClient.prefetchQuery({
-          queryKey: userBalanceKey,
-          staleTime: 15 * 1000, // 15 seconds
-        }),
-    ];
+    const keys = [
+      this.getBalanceKey(userAddress),
+      smartAccountAddress ? this.getBalanceKey(smartAccountAddress) : null,
+    ].filter(Boolean) as ReturnType<typeof QueryKeys.balance>[];
 
-    if (smartAccountAddress) {
-      const stakingBalanceKey = this.getBalanceKey(smartAccountAddress);
-      promises.push(
-        stakingBalanceKey &&
-          this.queryClient.prefetchQuery({
-            queryKey: stakingBalanceKey,
-            staleTime: 15 * 1000,
-          })
-      );
-    }
+    if (keys.length === 0) return;
 
-    await Promise.all(promises.filter(Boolean));
+    await Promise.all(
+      keys.map((key) =>
+        this.queryClient.refetchQueries({
+          queryKey: key,
+          type: "active",
+        })
+      )
+    );
   }
 
   /**
@@ -155,10 +155,10 @@ export class QueryCacheManager {
   optimisticallyUpdateBalance(
     userAddress: string,
     smartAccountAddress: string,
-    operation: 'stake' | 'unstake',
-    amount: number
+    operation: "stake" | "unstake",
+    amountWei: bigint
   ) {
-    const delta = BigInt(Math.floor(amount * 1e18));
+    const delta = amountWei;
 
     if (operation === 'stake') {
       // Staking: 用户 B3TR 减少

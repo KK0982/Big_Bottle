@@ -12,6 +12,12 @@ export class TokenUtils {
     this.symbol = symbol;
   }
 
+  private truncateDecimals(value: number, decimals: number): number {
+    if (!Number.isFinite(value)) return value;
+    const factor = Math.pow(10, decimals);
+    return Math.trunc(value * factor) / factor;
+  }
+
   /**
    * 将原始区块链值转换为显示格式
    */
@@ -31,7 +37,8 @@ export class TokenUtils {
    */
   formatForDisplay(amount: number | bigint, decimals: number = 2): string {
     const numericAmount = typeof amount === 'bigint' ? this.formatFromWei(amount) : amount;
-    return numericAmount.toLocaleString("en-US", {
+    const truncated = this.truncateDecimals(numericAmount, decimals);
+    return truncated.toLocaleString("en-US", {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });

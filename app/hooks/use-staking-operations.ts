@@ -613,48 +613,39 @@ export function useStakingOperations() {
         // Send transaction
         const result = await connex!.vendor.sign("tx", clauses).request();
 
-        // Optimistically update cache after transaction submission
-        if (cacheManager) {
-          cacheManager.optimisticallyUpdateBalance(
-            account!,
-            userInfo.smartAccountAddress!,
-            "stake",
-            amountValidation.value!
-          );
-        }
-
-        // Refresh balances after transaction confirmation
-        if (cacheManager && connex) {
-          (async () => {
-            try {
-              await connex.thor.transaction(result.txid).getReceipt();
-            } catch (err) {
-              console.warn("Waiting for stake receipt failed:", err);
-            } finally {
-              cacheManager
-                .invalidateStakingData(account!, userInfo.smartAccountAddress)
-                .catch((err) =>
-                  console.warn("Failed to invalidate staking data:", err)
-                );
+        const waitForConfirmation = async () => {
+          try {
+            await connex!.thor.transaction(result.txid).getReceipt();
+          } catch (receiptError) {
+            throw createStakingError(
+              receiptError instanceof Error
+                ? receiptError.message
+                : "Failed to confirm stake transaction",
+              "CONFIRMATION_FAILED",
+              receiptError
+            );
+          } finally {
+            if (cacheManager) {
+              await cacheManager.invalidateStakingData(
+                account!,
+                userInfo.smartAccountAddress
+              );
+              await cacheManager.prefetchBalances(
+                account!,
+                userInfo.smartAccountAddress
+              );
             }
-          })();
-        }
+          }
+        };
 
         return {
           success: true,
           txid: result.txid,
           meta: (result as any).meta,
+          waitForConfirmation,
         };
       } catch (error) {
         console.error("Staking failed:", error);
-
-        // Revert optimistic updates on failure
-        if (cacheManager) {
-          cacheManager.revertOptimisticUpdates(
-            account!,
-            userInfo.smartAccountAddress!
-          );
-        }
 
         const stakingError =
           error instanceof Error && "code" in error
@@ -742,48 +733,39 @@ export function useStakingOperations() {
         // Send transaction
         const result = await connex!.vendor.sign("tx", clauses).request();
 
-        // Optimistically update cache after transaction submission
-        if (cacheManager) {
-          cacheManager.optimisticallyUpdateBalance(
-            account!,
-            userInfo.smartAccountAddress!,
-            "unstake",
-            amountValidation.value!
-          );
-        }
-
-        // Refresh balances after transaction confirmation
-        if (cacheManager && connex) {
-          (async () => {
-            try {
-              await connex.thor.transaction(result.txid).getReceipt();
-            } catch (err) {
-              console.warn("Waiting for unstake receipt failed:", err);
-            } finally {
-              cacheManager
-                .invalidateStakingData(account!, userInfo.smartAccountAddress)
-                .catch((err) =>
-                  console.warn("Failed to invalidate staking data:", err)
-                );
+        const waitForConfirmation = async () => {
+          try {
+            await connex!.thor.transaction(result.txid).getReceipt();
+          } catch (receiptError) {
+            throw createStakingError(
+              receiptError instanceof Error
+                ? receiptError.message
+                : "Failed to confirm unstake transaction",
+              "CONFIRMATION_FAILED",
+              receiptError
+            );
+          } finally {
+            if (cacheManager) {
+              await cacheManager.invalidateStakingData(
+                account!,
+                userInfo.smartAccountAddress
+              );
+              await cacheManager.prefetchBalances(
+                account!,
+                userInfo.smartAccountAddress
+              );
             }
-          })();
-        }
+          }
+        };
 
         return {
           success: true,
           txid: result.txid,
           meta: (result as any).meta,
+          waitForConfirmation,
         };
       } catch (error) {
         console.error("Unstaking failed:", error);
-
-        // Revert optimistic updates on failure
-        if (cacheManager) {
-          cacheManager.revertOptimisticUpdates(
-            account!,
-            userInfo.smartAccountAddress!
-          );
-        }
 
         const stakingError =
           error instanceof Error && "code" in error
