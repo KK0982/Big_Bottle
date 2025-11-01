@@ -68,14 +68,14 @@ export const QueryConfig = {
 export const QueryKeys = {
   // Balance queries
   balance: (address?: string, contractAddresses?: Record<string, string>) =>
-    ["balance", address, contractAddresses] as const,
+    ["balance", address, JSON.stringify(contractAddresses)] as const,
 
   // User info queries
   userInfo: (
     account?: string,
     contractAddresses?: Record<string, string>,
     appId?: string
-  ) => ["userInfo", account, contractAddresses, appId] as const,
+  ) => ["userInfo", account, JSON.stringify(contractAddresses), appId] as const,
 
   // Rewards queries
   rewards: (smartAccountAddress?: string, rewarderAddress?: string) =>

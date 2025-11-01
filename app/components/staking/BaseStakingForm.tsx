@@ -3,7 +3,6 @@
 import { VStack } from "@chakra-ui/react";
 import { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { useUserInfo } from "../../hooks/use-user-info";
-import { useBalanceQuery } from "../../hooks/use-balance-query";
 import { useStakingOperations } from "../../hooks/use-staking-operations";
 import { useToastNotifications } from "../../hooks/use-toast-notifications";
 import {
@@ -35,13 +34,15 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const { userInfo } = useUserInfo();
-  const { balance: accountBalance } = useBalanceQuery(
-    userInfo.account || undefined
-  );
-  const { balance: stakingBalance } = useBalanceQuery(
-    userInfo.smartAccountAddress || undefined
-  );
-  const { stake, unstake, canStake, isConnected } = useStakingOperations();
+  const {
+    stake,
+    unstake,
+    canStake,
+    isConnected,
+    accountBalance,
+    stakingBalance,
+    isBalancesLoading,
+  } = useStakingOperations();
   const { showOperationResult } = useToastNotifications();
 
   const isStakeMode = mode === "stake";
@@ -182,7 +183,13 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
   );
 
   const handleSubmit = useCallback(async () => {
-    if (!amountValidation.isValid || !canStake || !isConnected || isLoading)
+    if (
+      !amountValidation.isValid ||
+      !canStake ||
+      !isConnected ||
+      isLoading ||
+      isBalancesLoading
+    )
       return;
 
     setIsLoading(true);
@@ -237,6 +244,7 @@ export function BaseStakingForm({ mode, onClose }: BaseStakingFormProps) {
     canStake,
     isConnected,
     isLoading,
+    isBalancesLoading,
     mode,
     isStakeMode,
     stake,

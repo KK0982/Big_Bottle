@@ -7,6 +7,9 @@ export const API_ENDPOINTS = {
 
 import type { ContractAddresses, AppConfig } from "../types";
 
+export const NODE_URL =
+  process.env.NEXT_PUBLIC_VECHAIN_NODE_URL ?? "https://mainnet.vechain.org";
+
 // VeDelegate 合约地址配置
 export const Addresses: ContractAddresses = {
   // 核心 staking 合约

@@ -1,9 +1,8 @@
 "use client";
 
-import React, { ReactNode, useEffect } from "react";
+import React, { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createQueryCacheManager } from "../../utils/query-cache-manager";
 
 // Create an optimized QueryClient instance for VeDelegate staking
 const queryClient = new QueryClient({
@@ -28,9 +27,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize cache manager
-const cacheManager = createQueryCacheManager(queryClient);
-
 // Dynamically import to avoid SSR issues
 const VeChainKitProviderComponent = dynamic(
   async () => (await import("@vechain/vechain-kit")).VeChainKitProvider,
@@ -42,12 +38,6 @@ interface VeChainProviderProps {
 }
 
 export const VeChainProvider = ({ children }: VeChainProviderProps) => {
-  // Setup automatic cache cleanup
-  useEffect(() => {
-    const cleanup = cacheManager.setupAutomaticCleanup();
-    return cleanup;
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <VeChainKitProviderComponent

@@ -204,4 +204,5 @@ export interface OperationResult {
   };
   error?: StakingError;
   waitForConfirmation?: () => Promise<void>;
+  receipt?: any;
 }

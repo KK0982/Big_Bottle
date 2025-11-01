@@ -2,10 +2,14 @@
 
 import React from "react";
 import { Box, Flex, Text, Skeleton, Image } from "@chakra-ui/react";
-import { StakingData } from "../hooks/use-staking-data";
+interface StakingSummary {
+  stakedBalance: string;
+  availableToStake: string;
+  poolExists: boolean;
+}
 
 interface StakingCardProps {
-  data: StakingData | null;
+  data: StakingSummary | null;
   loading: boolean;
 }
 
