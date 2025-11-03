@@ -158,6 +158,7 @@ export interface ContractAddresses {
   VOT3: string;
   VePassport: string;
   VeBetterDAO: string;
+  VeDelegateVotes: string;
 }
 
 // Query configuration
@@ -202,4 +203,6 @@ export interface OperationResult {
     blockTimestamp: number;
   };
   error?: StakingError;
+  waitForConfirmation?: () => Promise<void>;
+  receipt?: any;
 }

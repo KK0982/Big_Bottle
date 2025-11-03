@@ -120,35 +120,11 @@ export function useToastNotifications() {
     [showStakingSuccess, showUnstakingSuccess, showStakingError]
   );
 
-  const showLoadingToast = useCallback(
-    (operation: "stake" | "unstake") => {
-      const title =
-        operation === "stake" ? "Processing Stake..." : "Processing Unstake...";
-
-      return toast({
-        title,
-        status: "info",
-        duration: null, // Keep open until manually closed
-        isClosable: false,
-      });
-    },
-    [toast]
-  );
-
-  const closeToast = useCallback(
-    (toastId: string | number) => {
-      toast.close(toastId);
-    },
-    [toast]
-  );
-
   return {
     showToast,
     showStakingSuccess,
     showUnstakingSuccess,
     showStakingError,
     showOperationResult,
-    showLoadingToast,
-    closeToast,
   };
 }

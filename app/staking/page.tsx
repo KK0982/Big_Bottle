@@ -5,11 +5,29 @@ import MobileLayout from "../components/MobileLayout";
 import StakingCard from "../components/StakingCard";
 import { StakingModal } from "../components/StakingModal";
 import { Box, Text, Button, VStack, useDisclosure } from "@chakra-ui/react";
-import { useStakingData } from "../hooks/use-staking-data";
+import { useStakingOperations } from "../hooks/use-staking-operations";
+import { B3TR } from "../utils/token-balance";
 
 export default function Staking() {
-  const { data, loading } = useStakingData();
+  const {
+    accountBalance,
+    stakingBalance,
+    hasPool,
+    isBalancesLoading,
+  } = useStakingOperations();
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const totalStaked = stakingBalance.b3tr + stakingBalance.vot3;
+  const stakedBalance = B3TR.formatWithSymbol(totalStaked);
+  const availableToStake = B3TR.formatWithSymbol(accountBalance.b3tr);
+
+  const summary = {
+    stakedBalance,
+    availableToStake,
+    poolExists: hasPool,
+  };
+
+  const loading = isBalancesLoading;
 
   const handleManage = () => {
     onOpen();
@@ -42,7 +60,7 @@ export default function Staking() {
           </Text>
 
           {/* Staking Card */}
-          <StakingCard data={data} loading={loading} />
+          <StakingCard data={loading ? null : summary} loading={loading} />
         </VStack>
 
         {/* Manage Button Section */}
